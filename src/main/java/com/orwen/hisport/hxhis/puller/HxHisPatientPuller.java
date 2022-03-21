@@ -6,17 +6,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.util.stream.Stream;
+
 @Slf4j
-@Order(1)
-@Component
 public class HxHisPatientPuller extends AbstractHxHisPatientPuller {
 
     @Autowired
     private HxHisPatientRepository patients;
 
+    public HxHisPatientPuller(PullRange pullRange) {
+        super(pullRange);
+    }
+
 
     @Override
-    public void pull(PullRange pullRange) {
+    protected void pull(PullRange pullRange) {
 
+    }
+
+    public static Stream<AbstractHxHisPatientPuller> stream(PullRange startAt, Duration duration) {
+        return streamPullRange(startAt, duration).map(HxHisPatientPuller::new);
     }
 }

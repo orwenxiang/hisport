@@ -1,5 +1,6 @@
 package com.orwen.hisport.hxhis.dbaccess;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.orwen.hisport.common.dbaccess.AbstractPersistable;
@@ -10,12 +11,13 @@ import lombok.Setter;
 import lombok.ToString;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Getter
 @Setter
 @Entity
 @ToString
-@Table(name = "hx_his_leaves", indexes = {@Index(columnList = "person_id,leave_at", unique = true)})
+@Table(name = "hx_his_leaves", indexes = {@Index(columnList = "cert_num,latest_pull_at", unique = true)})
 public class HxHisCarePO extends AbstractPersistable {
 
     @JsonProperty("relatedPersonId")
@@ -47,4 +49,9 @@ public class HxHisCarePO extends AbstractPersistable {
     @JsonProperty("mpNat")
     @Column(name = "mp_nat")
     private Boolean mpNat;
+
+    @JsonIgnore
+    @Column(name = "latest_pull_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date latestPullAt;
 }

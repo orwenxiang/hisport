@@ -3,8 +3,13 @@ package com.orwen.hisport.hxhis.puller;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orwen.hisport.dispatcher.HisPortDispatcher;
+import com.orwen.hisport.hxhis.HxHisRecordService;
+import com.orwen.hisport.hxhis.dbaccess.HxHisRecordPO;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -20,7 +25,16 @@ import java.util.stream.Stream;
 public abstract class AbstractHxHisPatientPuller implements Runnable {
     private final PullRange pullRange;
 
-    public void run() {
+    @Autowired
+    protected HisPortDispatcher dispatcher;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    protected HxHisRecordService recordService;
+
+    public final void run() {
         log.debug("Doing {} with range {}", getClass(), pullRange);
         pull(pullRange);
         log.debug("Done {} with range {}", getClass(), pullRange);
@@ -32,7 +46,17 @@ public abstract class AbstractHxHisPatientPuller implements Runnable {
         return Collections.emptyList();
     }
 
-    protected static Stream<PullRange> streamPullRange(PullRange startAt, Duration duration) {
+    @SneakyThrows
+    protected <T> void storeRecord(T content, Boolean dispatched, Date pullAt) {
+        HxHisRecordPO hisRecordPO = new HxHisRecordPO();
+        hisRecordPO.setType(content.getClass().getName());
+        hisRecordPO.setDispatched(dispatched);
+        hisRecordPO.setPullAt(pullAt);
+        hisRecordPO.setContent(objectMapper.writeValueAsString(content));
+        recordService.storeRecord(hisRecordPO);
+    }
+
+    public static Stream<PullRange> streamPullRange(PullRange startAt, Duration duration) {
         return Stream.iterate(startAt, current -> !current.isBiggerThanNow(), current -> current.nextDuration(duration));
     }
 

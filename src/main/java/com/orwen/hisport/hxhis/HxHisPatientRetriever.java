@@ -12,9 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import java.time.Duration;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
 @Slf4j
@@ -33,6 +35,13 @@ public class HxHisPatientRetriever {
     @Autowired
     private KeyValueRepository keyValues;
 
+    private Duration patientPullDuration;
+
+    @PostConstruct
+    void init() {
+        patientPullDuration = properties.getHxHis().getPatientPullRate();
+    }
+
     @Scheduled(fixedRateString = "${hisport.hxHis.patientPullRate}")
     public void schedulePull() {
         Lock pullLock = redissonClient.getLock("HX_HIS_PATIENT_RETRIEVER_PULLING");
@@ -41,25 +50,25 @@ public class HxHisPatientRetriever {
         }
         try {
             AbstractHxHisPatientPuller.PullRange latestPullAt = latestPullAt();
-            AtomicReference<AbstractHxHisPatientPuller.PullRange> latestPullRange = new AtomicReference<>();
 
-            HxHisPatientPuller.stream(latestPullAt, properties.getHxHis().getPatientPullRate()).forEach(pullHxHisExecutor::submit);
-            HxHisLeavePuller.stream(latestPullAt, properties.getHxHis().getPatientPullRate()).forEach(pullHxHisExecutor::submit);
-            HxHisTransferPuller.stream(latestPullAt, properties.getHxHis().getPatientPullRate()).forEach(pullHxHisExecutor::submit);
-            HxHisCarePuller.stream(latestPullAt, properties.getHxHis().getPatientPullRate())
-                    .peek(puller -> latestPullRange.set(puller.getPullRange())).forEach(pullHxHisExecutor::submit);
+            HxHisPatientPuller.stream(latestPullAt, patientPullDuration).forEach(pullHxHisExecutor::submit);
+            HxHisLeavePuller.stream(latestPullAt, patientPullDuration).forEach(pullHxHisExecutor::submit);
+            HxHisTransferPuller.stream(latestPullAt, patientPullDuration).forEach(pullHxHisExecutor::submit);
+            HxHisCarePuller.stream(latestPullAt, patientPullDuration).forEach(pullHxHisExecutor::submit);
 
-            if (latestPullRange.get() != null) {
-                KeyValuePO keyValue = keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT)).orElseGet(() -> {
-                    KeyValuePO keyValuePO = new KeyValuePO();
-                    keyValuePO.setKey(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT);
-                    return keyValuePO;
-                });
-                Date latestPullTime = latestPullRange.get().getEndTime();
-                keyValue.setValue(String.valueOf(latestPullRange.get().getEndDate().getTime()));
-                log.info("Save latest pull at {}", latestPullTime);
-                keyValues.save(keyValue);
-            }
+            AbstractHxHisPatientPuller.streamPullRange(latestPullAt, patientPullDuration)
+                    .max(Comparator.comparing(AbstractHxHisPatientPuller.PullRange::getEndDate))
+                    .map(AbstractHxHisPatientPuller.PullRange::getEndDate)
+                    .ifPresent(latestPullDate -> {
+                        KeyValuePO keyValue = keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT)).orElseGet(() -> {
+                            KeyValuePO keyValuePO = new KeyValuePO();
+                            keyValuePO.setKey(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT);
+                            return keyValuePO;
+                        });
+                        keyValue.setValue(String.valueOf(latestPullDate));
+                        log.info("Save latest pull at {}", latestPullDate);
+                        keyValues.save(keyValue);
+                    });
         } finally {
             pullLock.unlock();
         }
@@ -68,7 +77,7 @@ public class HxHisPatientRetriever {
     protected AbstractHxHisPatientPuller.PullRange latestPullAt() {
         return keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT)).map(KeyValuePO::getValue)
                 .map(Long::valueOf).map(Date::new)
-                .map(date -> new AbstractHxHisPatientPuller.PullRange(date, properties.getHxHis().getPatientPullRate()))
-                .orElse(new AbstractHxHisPatientPuller.PullRange(properties.getHxHis().getLatestPullAt(), properties.getHxHis().getPatientPullRate()));
+                .map(date -> new AbstractHxHisPatientPuller.PullRange(date, patientPullDuration))
+                .orElse(new AbstractHxHisPatientPuller.PullRange(properties.getHxHis().getLatestPullAt(), patientPullDuration));
     }
 }

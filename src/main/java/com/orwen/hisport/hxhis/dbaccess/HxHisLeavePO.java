@@ -1,5 +1,6 @@
 package com.orwen.hisport.hxhis.dbaccess;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.orwen.hisport.common.dbaccess.AbstractPersistable;
 import lombok.Getter;
@@ -24,4 +25,9 @@ public class HxHisLeavePO extends AbstractPersistable {
     @JsonProperty("inChargeTime")
     @Temporal(TemporalType.TIMESTAMP)
     private Date leaveAt;
+
+    @JsonIgnore
+    @Column(name = "latest_pull_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date latestPullAt;
 }

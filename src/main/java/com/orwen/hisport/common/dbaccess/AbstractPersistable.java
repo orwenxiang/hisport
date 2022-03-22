@@ -19,14 +19,14 @@ public abstract class AbstractPersistable implements Persistable<Long>, Serializ
     private static final long serialVersionUID = 1L;
 
     @Id
+    @JsonIgnore
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonIgnore
     private Long id;
 
     @Version
-    @Column(name = "version")
     @JsonIgnore
+    @Column(name = "version")
     private Long version;
 
     @Transient

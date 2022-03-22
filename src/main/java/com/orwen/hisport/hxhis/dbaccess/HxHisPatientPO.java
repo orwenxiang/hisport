@@ -1,5 +1,6 @@
 package com.orwen.hisport.hxhis.dbaccess;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.orwen.hisport.common.dbaccess.AbstractPersistable;
@@ -19,7 +20,7 @@ import java.util.Date;
 @Setter
 @Entity
 @ToString
-@Table(name = "hx_his_patients", indexes = {@Index(columnList = "person_id,transfer_at", unique = true)})
+@Table(name = "hx_his_patients", indexes = {@Index(columnList = "person_id,in_hospital", unique = true)})
 public class HxHisPatientPO extends AbstractPersistable {
     @JsonProperty("personId")
     @Column(name = "person_id", length = 48)
@@ -87,4 +88,9 @@ public class HxHisPatientPO extends AbstractPersistable {
     @JsonProperty("bedNum")
     @Column(name = "bed_num", length = 32)
     private String bedNum;
+
+    @JsonIgnore
+    @Column(name = "latest_pull_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date latestPullAt;
 }

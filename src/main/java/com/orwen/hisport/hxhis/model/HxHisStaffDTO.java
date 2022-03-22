@@ -1,5 +1,6 @@
 package com.orwen.hisport.hxhis.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.orwen.hisport.utils.DateUtils;
@@ -8,6 +9,9 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Date;
 import java.util.Objects;
 
@@ -23,6 +27,9 @@ public class HxHisStaffDTO implements Serializable {
     private String name;
     @JacksonXmlProperty(localName = "CTCP_IDCardNO")
     private String certNum;
+    @JacksonXmlProperty(localName = "CTCP_DeptHierarchyCode")
+    private String departId;
+
     @JacksonXmlProperty(localName = "CTCP_Status")
     private String status;
 
@@ -37,9 +44,22 @@ public class HxHisStaffDTO implements Serializable {
     @JacksonXmlProperty(localName = "CTCP_EndDate")
     private Date validEnd;
 
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JacksonXmlProperty(localName = "CTCP_UpdateDate")
+    private LocalDate updateDate;
+
+    @JsonFormat(pattern = "HH:mm:ss")
+    @JacksonXmlProperty(localName = "CTCP_UpdateTime")
+    private LocalTime updateTime;
+
     @JsonIgnore
     public boolean isEnable() {
         return Objects.equals(status, ENABLE_CODE) &&
                 DateUtils.isBetween(validStart, validEnd, new Date());
+    }
+
+    @JsonIgnore
+    public LocalDateTime updateAt() {
+        return updateTime.atDate(updateDate);
     }
 }

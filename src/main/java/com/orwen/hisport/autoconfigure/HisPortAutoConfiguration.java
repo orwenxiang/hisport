@@ -1,6 +1,9 @@
 package com.orwen.hisport.autoconfigure;
 
+import com.orwen.hisport.artemis.dbaccess.ArtemisDepartPO;
 import com.orwen.hisport.common.dbaccess.repository.DBAccessRepositoryImpl;
+import org.redisson.api.LocalCachedMapOptions;
+import org.redisson.api.RLocalCachedMap;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -23,6 +26,12 @@ public class HisPortAutoConfiguration {
 
     @Bean(destroyMethod = "shutdown")
     public ExecutorService pullHxHisExecutor() {
-        return redissonClient.getExecutorService("pull_hx_his_patient_executor");
+        return redissonClient.getExecutorService("hx_his_patient_pull_executor");
+    }
+
+    @Bean("artemisDepartCache")
+    public RLocalCachedMap<String, ArtemisDepartPO> artemisDepartCache() {
+        return redissonClient.getLocalCachedMap("artemis_depart_cache", LocalCachedMapOptions.<String, ArtemisDepartPO>defaults()
+                .evictionPolicy(LocalCachedMapOptions.EvictionPolicy.SOFT));
     }
 }

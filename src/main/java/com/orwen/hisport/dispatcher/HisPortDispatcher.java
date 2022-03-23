@@ -9,6 +9,7 @@ import com.orwen.hisport.hxhis.dbaccess.HxHisCarePO;
 import com.orwen.hisport.hxhis.dbaccess.HxHisLeavePO;
 import com.orwen.hisport.hxhis.dbaccess.HxHisPatientPO;
 import com.orwen.hisport.hxhis.dbaccess.HxHisTransferPO;
+import com.orwen.hisport.hxhis.dbaccess.repository.HxHisSexRepository;
 import com.orwen.hisport.hxhis.model.HxHisStaffDTO;
 import com.orwen.hisport.hxhis.model.common.HxHisCommonDepartDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +27,12 @@ import java.util.TimeZone;
 @Component
 public class HisPortDispatcher {
     private static final ZoneOffset DEFAULT_ZONE_OFFSET = ZoneOffset.ofTotalSeconds(TimeZone.getTimeZone("GMT+8").getRawOffset() / 1000);
-    
+
     @Autowired
     private RabbitOperations rabbitOperation;
+
+    @Autowired
+    private HxHisSexRepository hisSexes;
 
     public void departChanged(HxHisCommonDepartDTO departDTO) {
         ArtemisDepartPO departPO = new ArtemisDepartPO();
@@ -46,7 +50,7 @@ public class HisPortDispatcher {
             artemisStaffDTO.setName(staffDTO.getName());
             artemisStaffDTO.setCertNum(staffDTO.getCertNum());
             artemisStaffDTO.setDepartId(staffDTO.getDepartId());
-            artemisStaffDTO.setGender(HisPortGender.UNKNOWN);//TODO
+            artemisStaffDTO.setGender(HisPortGender.ofHxHisCode(staffDTO.getSexCode()));
             artemisStaffDTO.setPhone(staffDTO.getPhone());
             artemisStaffDTO.setRole(ArtemisRole.OTHER);//TODO
             rabbitOperation.convertAndSend(HxPortDefs.STAFF_JOINED_QUEUE, artemisStaffDTO);

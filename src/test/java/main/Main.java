@@ -2,7 +2,7 @@ package main;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.orwen.hisport.hxhis.model.HxHisNormalDepartDTO;
+import com.orwen.hisport.hxhis.model.HxHisLevel7DepartDTO;
 import com.orwen.hisport.hxhis.model.common.HxHisHeader;
 import com.orwen.hisport.hxhis.model.request.HxHisRequest;
 import com.orwen.hisport.hxhis.model.request.misc.HxHisLevel7DepartWrapper;
@@ -21,7 +21,7 @@ public class Main {
 
         HxHisRequest<HxHisLevel7DepartWrapper> hisRequest = new HxHisRequest<>();
         hisRequest.setHeader(new HxHisHeader());
-        hisRequest.setBody(new HxHisLevel7DepartWrapper(List.of(new HxHisNormalDepartDTO())));
+        hisRequest.setBody(new HxHisLevel7DepartWrapper(List.of(new HxHisLevel7DepartDTO())));
 
         System.out.println(objectWriter.writeValueAsString(hisRequest));
 

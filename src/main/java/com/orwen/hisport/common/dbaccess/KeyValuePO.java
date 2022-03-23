@@ -11,7 +11,7 @@ import javax.persistence.*;
 @Setter
 @Entity
 @ToString
-@Table(name = "key_values", indexes = @Index(columnList = "name", unique = true))
+@Table(name = "key_values", indexes = @Index(columnList = "key", unique = true))
 public class KeyValuePO extends AbstractPersistable {
     @Enumerated(EnumType.STRING)
     @Column(name = "key", length = 32)

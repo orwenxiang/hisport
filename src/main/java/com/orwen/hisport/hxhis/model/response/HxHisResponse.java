@@ -20,4 +20,18 @@ public class HxHisResponse implements Serializable {
 
     @JacksonXmlProperty(localName = "Body")
     private HxHisRespBody body;
+
+    public static HxHisResponse success(HxHisHeader header) {
+        HxHisResponse response = new HxHisResponse();
+        response.setHeader(header);
+        response.setBody(HxHisRespBody.success());
+        return response;
+    }
+
+    public static HxHisResponse failed(HxHisHeader header) {
+        HxHisResponse response = new HxHisResponse();
+        response.setHeader(header);
+        response.setBody(HxHisRespBody.failed());
+        return response;
+    }
 }

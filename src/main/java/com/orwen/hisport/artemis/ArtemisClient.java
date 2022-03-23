@@ -20,6 +20,7 @@ import org.springframework.boot.autoconfigure.jackson.JacksonProperties;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
@@ -55,6 +56,7 @@ public class ArtemisClient {
     private ObjectMapper objectMapper;
 
     @PostConstruct
+    @Transactional
     void initialize() {
         artemisConfig = properties.getArtemis();
 
@@ -71,7 +73,7 @@ public class ArtemisClient {
             Lock loadDataLock = departCache.getLock("load_data_lock");
             if (loadDataLock.tryLock()) {
                 try {
-                    departs.stream().forEach(item -> departCache.putAsync(item.getDepartId(), item));
+                    departs.findAll().forEach(item -> departCache.putAsync(item.getDepartId(), item));
                 } finally {
                     loadDataLock.unlock();
                 }

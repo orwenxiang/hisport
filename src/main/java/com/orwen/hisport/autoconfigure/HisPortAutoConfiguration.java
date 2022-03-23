@@ -11,12 +11,16 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.concurrent.ExecutorService;
 
+@EnableAsync
 @Configuration
 @EnableScheduling
+@EnableTransactionManagement
 @EnableConfigurationProperties(HisPortProperties.class)
 @AutoConfigureAfter(RedissonNodeAutoConfiguration.class)
 @EnableJpaRepositories(basePackages = "com.orwen.hisport", repositoryBaseClass = DBAccessRepositoryImpl.class)
@@ -24,14 +28,14 @@ public class HisPortAutoConfiguration {
     @Autowired
     private RedissonClient redissonClient;
 
-    @Bean(destroyMethod = "shutdown")
+    @Bean(destroyMethod = "shutdown", name = "pullHxHisExecutor")
     public ExecutorService pullHxHisExecutor() {
         return redissonClient.getExecutorService("hx_his_patient_pull_executor");
     }
 
     @Bean("artemisDepartCache")
     public RLocalCachedMap<String, ArtemisDepartPO> artemisDepartCache() {
-        return redissonClient.getLocalCachedMap("artemis_depart_cache", LocalCachedMapOptions.<String, ArtemisDepartPO>defaults()
-                .evictionPolicy(LocalCachedMapOptions.EvictionPolicy.SOFT));
+        return redissonClient.getLocalCachedMap("artemis_depart_cache", redissonClient.getConfig().getCodec(),
+                LocalCachedMapOptions.<String, ArtemisDepartPO>defaults().evictionPolicy(LocalCachedMapOptions.EvictionPolicy.SOFT));
     }
 }

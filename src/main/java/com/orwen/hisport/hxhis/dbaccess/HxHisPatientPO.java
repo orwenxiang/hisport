@@ -69,7 +69,6 @@ public class HxHisPatientPO extends AbstractPersistable {
 
     @JsonProperty("erFlag")
     @Column(name = "emergence")
-    @Enumerated(EnumType.STRING)
     @JsonSerialize(using = BoolToIntSerializer.class)
     private Boolean emergence;
 
@@ -77,8 +76,8 @@ public class HxHisPatientPO extends AbstractPersistable {
     @Column(name = "relation_name", length = 32)
     private String relationName;
 
-    @JsonProperty("relationName")
-    @Column(name = "relation_name", length = 20)
+    @JsonProperty("relationPhone")
+    @Column(name = "relation_phone", length = 20)
     private String relationPhone;
 
     @JsonProperty("wardNum")

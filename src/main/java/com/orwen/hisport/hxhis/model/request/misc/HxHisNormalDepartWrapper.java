@@ -5,7 +5,6 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.orwen.hisport.hxhis.model.HxHisNormalDepartDTO;
 import lombok.*;
 
-import java.io.Serializable;
 import java.util.List;
 
 @Getter
@@ -13,10 +12,11 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class HxHisNormalDepartWrapper implements Serializable {
+public class HxHisNormalDepartWrapper extends AbstractHxHisWrapper<HxHisNormalDepartDTO> {
     private static final long serialVersionUID = 1L;
+    public static final String TYPE = "CT_DeptHierarchy";
 
-    @JacksonXmlProperty(localName = "CT_DeptHierarchy")
-    @JacksonXmlElementWrapper(localName = "CT_DeptHierarchyList")
-    private List<HxHisNormalDepartDTO> departs;
+    @JacksonXmlProperty(localName = TYPE)
+    @JacksonXmlElementWrapper(localName = TYPE + "List")
+    private List<HxHisNormalDepartDTO> contents;
 }

@@ -16,4 +16,9 @@ public enum HisPortGender implements EnumIntTyped<HisPortGender> {
     ;
 
     private final int type;
+
+    //TODO
+    public static HisPortGender ofHxHisCode(String code) {
+        return HisPortGender.UNKNOWN;
+    }
 }

@@ -42,7 +42,7 @@ public class HxHisPatientRetriever {
         patientPullDuration = properties.getHxHis().getPatientPullRate();
     }
 
-    @Scheduled(fixedRateString = "${hisport.hxHis.patientPullRate}")
+    @Scheduled(fixedRateString = "${hisport.hx-his.patient-pull-rate}")
     public void schedulePull() {
         Lock pullLock = redissonClient.getLock("HX_HIS_PATIENT_RETRIEVER_PULLING");
         if (!pullLock.tryLock()) {

@@ -42,6 +42,7 @@ public abstract class AbstractHxHisPatientPuller implements Runnable {
 
     protected abstract void pull(PullRange pullRange);
 
+    //TODO
     protected <T> List<T> retrievePatientContent(String methodCode, PullRange pullRange, TypeReference<T> typeReference) {
         return Collections.emptyList();
     }

@@ -1,6 +1,5 @@
 package com.orwen.hisport.hxhis;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orwen.hisport.hxhis.dbaccess.HxHisRecordPO;
 import com.orwen.hisport.hxhis.dbaccess.QHxHisRecordPO;
 import com.orwen.hisport.hxhis.dbaccess.repository.HxHisRecordRepository;
@@ -13,9 +12,6 @@ import org.springframework.stereotype.Service;
 public
 class HxHisRecordService {
     private static final QHxHisRecordPO qRecord = QHxHisRecordPO.hxHisRecordPO;
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @Autowired
     private HxHisRecordRepository records;
 

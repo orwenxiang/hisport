@@ -2,7 +2,7 @@ package com.orwen.hisport.hxhis.model.request.misc;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.orwen.hisport.hxhis.model.HxHisLevel7DepartDTO;
+import com.orwen.hisport.hxhis.model.HxHisStaffDTO;
 import lombok.*;
 
 import java.util.List;
@@ -12,10 +12,10 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class HxHisLevel7DepartWrapper extends AbstractHxHisWrapper<HxHisLevel7DepartDTO> {
-    public static final String TYPE = "CT_DeptLevel7";
+public class HxHisStaffWrapper extends AbstractHxHisWrapper<HxHisStaffDTO> {
+    public static final String TYPE = "CT_CareProv";
 
     @JacksonXmlProperty(localName = TYPE)
     @JacksonXmlElementWrapper(localName = TYPE + "List")
-    private List<HxHisLevel7DepartDTO> contents;
+    private List<HxHisStaffDTO> contents;
 }

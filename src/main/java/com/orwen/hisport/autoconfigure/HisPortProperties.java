@@ -7,6 +7,7 @@ import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
+import java.util.Calendar;
 import java.util.Date;
 
 @Getter
@@ -15,24 +16,15 @@ import java.util.Date;
 @ConfigurationProperties(prefix = "hisport")
 public class HisPortProperties {
     private HikVisionArtemisConfig artemis = new HikVisionArtemisConfig();
-    private WorkQueueConfig queue = new WorkQueueConfig();
     private HxHisConfig hxHis = new HxHisConfig();
 
     @Getter
     @Setter
     @ToString
     public static class HxHisConfig {
+        private Integer pullWeight = 2;
         private Duration patientPullRate = Duration.ofMinutes(10);
-        private Date latestPullAt = new Date(2000, 1, 1);
-    }
-
-    @Getter
-    @Setter
-    @ToString
-    public static class WorkQueueConfig {
-        private String depart = "hx_his_depart";
-        private String staff = "hx_his_staff";
-        private String patient = "hx_his_patient";
+        private Date latestPullAt = new Date(2000 - 1900, Calendar.JANUARY, 1);
     }
 
 

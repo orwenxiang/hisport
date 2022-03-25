@@ -1,5 +1,8 @@
 package com.orwen.hisport.defs;
 
+import java.time.ZoneOffset;
+import java.util.TimeZone;
+
 public interface HxPortDefs {
     String DEPART_CHANGED_QUEUE = "hisport_depart_changed";
 
@@ -14,4 +17,9 @@ public interface HxPortDefs {
     String PATIENT_TRANSFER_QUEUE = "hisport_patient_transfer";
 
     String CARE_JOINED_QUEUE = "hisport_care_joined";
+
+    String PATIENT_PULLER_TOPIC = "hisport_patient_topic";
+    
+    ZoneOffset DEFAULT_ZONE_OFFSET = ZoneOffset
+            .ofTotalSeconds(TimeZone.getTimeZone("GMT+8").getRawOffset() / 1000);
 }

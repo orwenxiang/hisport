@@ -19,15 +19,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.time.ZoneOffset;
 import java.util.Date;
-import java.util.TimeZone;
 
 @Slf4j
 @Component
 public class HisPortDispatcher {
-    private static final ZoneOffset DEFAULT_ZONE_OFFSET = ZoneOffset.ofTotalSeconds(TimeZone.getTimeZone("GMT+8").getRawOffset() / 1000);
-
     @Autowired
     private RabbitOperations rabbitOperation;
 
@@ -57,7 +53,7 @@ public class HisPortDispatcher {
         } else {
             ArtemisLeaveDTO leaveDTO = new ArtemisLeaveDTO();
             leaveDTO.setPersonId(staffDTO.getId());
-            leaveDTO.setLeaveAt(Date.from(staffDTO.updateAt().toInstant(DEFAULT_ZONE_OFFSET)));
+            leaveDTO.setLeaveAt(Date.from(staffDTO.updateAt().toInstant(HxPortDefs.DEFAULT_ZONE_OFFSET)));
             rabbitOperation.convertAndSend(HxPortDefs.STAFF_LEAVED_QUEUE, leaveDTO);
         }
     }

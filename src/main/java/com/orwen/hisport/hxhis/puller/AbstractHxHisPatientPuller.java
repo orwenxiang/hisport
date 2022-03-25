@@ -22,8 +22,7 @@ import java.util.stream.Stream;
 @Slf4j
 @Getter
 @RequiredArgsConstructor
-public abstract class AbstractHxHisPatientPuller implements Runnable {
-    private final PullRange pullRange;
+public abstract class AbstractHxHisPatientPuller {
 
     @Autowired
     protected HisPortDispatcher dispatcher;
@@ -34,13 +33,7 @@ public abstract class AbstractHxHisPatientPuller implements Runnable {
     @Autowired
     protected HxHisRecordService recordService;
 
-    public final void run() {
-        log.debug("Doing {} with range {}", getClass(), pullRange);
-        pull(pullRange);
-        log.debug("Done {} with range {}", getClass(), pullRange);
-    }
-
-    protected abstract void pull(PullRange pullRange);
+    public abstract void pull(PullRange pullRange);
 
     //TODO
     protected <T> List<T> retrievePatientContent(String methodCode, PullRange pullRange, TypeReference<T> typeReference) {

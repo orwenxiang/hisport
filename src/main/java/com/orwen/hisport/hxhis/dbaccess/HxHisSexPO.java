@@ -7,13 +7,14 @@ import lombok.ToString;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.Table;
 
 @Getter
 @Setter
 @Entity
 @ToString
-@Table(name = "hx_his_sexes")
+@Table(name = "hx_his_sexes", indexes = @Index(columnList = "code", unique = true))
 public class HxHisSexPO extends AbstractPersistable {
     @Column(name = "code", length = 32)
     private String code;

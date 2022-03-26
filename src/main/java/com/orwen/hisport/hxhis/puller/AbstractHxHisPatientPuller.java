@@ -39,7 +39,7 @@ public abstract class AbstractHxHisPatientPuller {
             "   <soapenv:Body>\n" +
             "      <int:InvokeToString>\n" +
             "         <int:Method>REQUEST_METHOD</int:Method>\n" +
-            "         <int:DataString>REQUEST_BODY</int:DataString>\n" +
+            "         <int:DataString><![CDATA[REQUEST_BODY]]></int:DataString>\n" +
             "      </int:InvokeToString>\n" +
             "   </soapenv:Body>\n" +
             "</soapenv:Envelope>";
@@ -48,8 +48,8 @@ public abstract class AbstractHxHisPatientPuller {
 
     private static final String REQUEST_METHOD = "REQUEST_METHOD";
     private static final String REQUEST_BODY = "REQUEST_BODY";
-    private static final String RETURN_START_KEY = "<InvokeToStringResult>";
-    private static final String RETURN_END_KEY = "</InvokeToStringResult>";
+    private static final String RETURN_START_KEY = "<InvokeToStringResult><![CDATA[";
+    private static final String RETURN_END_KEY = "]]></InvokeToStringResult>";
     @Autowired
     private HisPortProperties properties;
 

@@ -44,7 +44,8 @@ public abstract class AbstractHxHisPatientPuller {
             "   </soapenv:Body>\n" +
             "</soapenv:Envelope>";
     private static final HttpHeaders DEFAULT_MODIFY_HEADERS = HttpHeaders.readOnlyHttpHeaders(new HttpHeaders(new LinkedMultiValueMap<>(
-            Map.of("Content-Type", List.of("text/xml;charset=UTF-8")))));
+            Map.of("Content-Type", List.of("text/xml;charset=UTF-8"),
+                    "SOAPAction", List.of("\"http://hospital.service.com/interface/Huaxi.InvokeMessage.BS.InvokeService.InvokeToString\""))));
 
     private static final String REQUEST_METHOD = "REQUEST_METHOD";
     private static final String REQUEST_BODY = "REQUEST_BODY";

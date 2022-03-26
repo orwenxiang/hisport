@@ -56,8 +56,8 @@ public class HxHisPatientRetriever implements MessageListener<String> {
     private ObjectProvider<AbstractHxHisPatientPuller> hxHisPatientPullers;
 
     @Autowired
-    @Qualifier("pullHxHisWeights")
-    private RMap<String, Integer> pullHxHisWeights;
+    @Qualifier("patientPullWeights")
+    private RMap<String, Integer> patientPullWeights;
 
     @Autowired
     @Qualifier("patientPullerTopic")
@@ -69,7 +69,7 @@ public class HxHisPatientRetriever implements MessageListener<String> {
 
     @PostConstruct
     void init() {
-        patientPullDuration = properties.getHxHis().getPatientPullRate();
+        patientPullDuration = properties.getPull().getRate();
         instanceId = redissonClient.getId();
         patientPullerTopic.addListener(String.class, this);
     }
@@ -77,16 +77,16 @@ public class HxHisPatientRetriever implements MessageListener<String> {
     @PreDestroy
     void shutdown() {
         patientPullerTopic.removeListener(this);
-        pullHxHisWeights.getLock(instanceId).forceUnlock();
-        pullHxHisWeights.remove(instanceId);
+        patientPullWeights.getLock(instanceId).forceUnlock();
+        patientPullWeights.remove(instanceId);
     }
 
     @Scheduled(fixedRateString = "${hisport.hx-his.patient-pull-rate}")
     protected void scheduleSelectDoPullInstance() {
-        pullHxHisWeights.put(instanceId, properties.getHxHis().getPullWeight());
-        RLock currentInstanceLock = pullHxHisWeights.getLock(instanceId);
+        patientPullWeights.put(instanceId, properties.getPull().getWeight());
+        RLock currentInstanceLock = patientPullWeights.getLock(instanceId);
         if (!currentInstanceLock.isLocked()) {
-            pullHxHisWeights.getLock(instanceId).lock();
+            patientPullWeights.getLock(instanceId).lock();
         }
 
         Lock pullLock = redissonClient.getLock(RETRIEVE_PULLER_LOCK);
@@ -95,14 +95,14 @@ public class HxHisPatientRetriever implements MessageListener<String> {
             return;
         }
         try {
-            if (pullHxHisWeights.size() < 2) {
+            if (patientPullWeights.size() < 2) {
                 patientPullerTopic.publishAsync(instanceId);
                 return;
             }
 
             List<String> instances = new ArrayList<>();
 
-            pullHxHisWeights.entrySet().stream().filter(instance -> pullHxHisWeights.getLock(instanceId).isLocked())
+            patientPullWeights.entrySet().stream().filter(instance -> patientPullWeights.getLock(instanceId).isLocked())
                     .forEach(entry -> IntStream.range(0, entry.getValue()).forEach(index -> instances.add(entry.getKey())));
 
             String selectedInstanceId = instances.get(ThreadLocalRandom.current()
@@ -166,7 +166,7 @@ public class HxHisPatientRetriever implements MessageListener<String> {
         return keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT)).map(KeyValuePO::getValue)
                 .map(Long::valueOf).map(Date::new)
                 .map(date -> new AbstractHxHisPatientPuller.PullRange(date, patientPullDuration))
-                .orElse(new AbstractHxHisPatientPuller.PullRange(properties.getHxHis().getLatestPullAt(), patientPullDuration));
+                .orElse(new AbstractHxHisPatientPuller.PullRange(properties.getPull().getLatestAt(), patientPullDuration));
     }
 
     private List<AbstractHxHisPatientPuller.PullRange> calculatePullRanges(

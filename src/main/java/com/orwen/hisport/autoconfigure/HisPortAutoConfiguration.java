@@ -31,9 +31,9 @@ public class HisPortAutoConfiguration {
         return new ForkJoinPool(Runtime.getRuntime().availableProcessors());
     }
 
-    @Bean(name = "pullHxHisWeights")
-    public RMap<String, Integer> pullHxHisWeights() {
-        return redissonClient.getLocalCachedMap("pull_hx_his_weights",
+    @Bean(name = "patientPullWeights")
+    public RMap<String, Integer> patientPullWeights() {
+        return redissonClient.getLocalCachedMap("patient_pull_weights",
                 LocalCachedMapOptions.defaults());
     }
 

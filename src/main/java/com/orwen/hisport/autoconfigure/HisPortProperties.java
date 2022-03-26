@@ -16,15 +16,16 @@ import java.util.Date;
 @ConfigurationProperties(prefix = "hisport")
 public class HisPortProperties {
     private HikVisionArtemisConfig artemis = new HikVisionArtemisConfig();
-    private HxHisConfig hxHis = new HxHisConfig();
+    private HxHisPatientPullConfig pull = new HxHisPatientPullConfig();
 
     @Getter
     @Setter
     @ToString
-    public static class HxHisConfig {
-        private Integer pullWeight = 2;
-        private Duration patientPullRate = Duration.ofMinutes(10);
-        private Date latestPullAt = new Date(2000 - 1900, Calendar.JANUARY, 1);
+    public static class HxHisPatientPullConfig {
+        private String endpoint = "";
+        private Integer weight = 2;
+        private Duration rate = Duration.ofMinutes(10);
+        private Date latestAt = new Date(2000 - 1900, Calendar.JANUARY, 1);
     }
 
 

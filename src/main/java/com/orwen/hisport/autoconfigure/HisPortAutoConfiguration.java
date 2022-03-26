@@ -58,7 +58,8 @@ public class HisPortAutoConfiguration {
 
         StringHttpMessageConverter messageConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
         messageConverter.setSupportedMediaTypes(List.
-                of(new MediaType("text", "xml", StandardCharsets.UTF_8)));
+                of(new MediaType("text", "xml", StandardCharsets.UTF_8),
+                        new MediaType("text", "html", StandardCharsets.UTF_8)));
 
         restTemplate.setMessageConverters(List.of(messageConverter));
 

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.orwen.hisport.autoconfigure.HisPortProperties;
 import com.orwen.hisport.dispatcher.HisPortDispatcher;
 import com.orwen.hisport.hxhis.HxHisRecordService;
 import com.orwen.hisport.hxhis.dbaccess.HxHisRecordPO;
@@ -49,7 +50,8 @@ public abstract class AbstractHxHisPatientPuller {
     private static final String REQUEST_BODY = "REQUEST_BODY";
     private static final String RETURN_START_KEY = "<InvokeToStringResult>";
     private static final String RETURN_END_KEY = "</InvokeToStringResult>";
-
+    @Autowired
+    private HisPortProperties properties;
 
     @Autowired
     protected HisPortDispatcher dispatcher;
@@ -94,7 +96,7 @@ public abstract class AbstractHxHisPatientPuller {
 
     private String retrievePatientContent(String methodCode, String requestStr) {
         String requestBody = WS_SOAP_MESSAGE_TEMPLATE.replace(REQUEST_METHOD, methodCode).replace(REQUEST_BODY, requestStr);
-        ResponseEntity<String> responseEntity = patientPullerRestTemplate.exchange(PULL_HIS_PATIENT_URI, HttpMethod.POST,
+        ResponseEntity<String> responseEntity = patientPullerRestTemplate.exchange(properties.getPull().getEndpoint(), HttpMethod.POST,
                 new HttpEntity<>(requestBody, DEFAULT_MODIFY_HEADERS), new ParameterizedTypeReference<>() {
                 });
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {

@@ -22,7 +22,7 @@ public class HisPortProperties {
     @Setter
     @ToString
     public static class HxHisPatientPullConfig {
-        private String endpoint = "";
+        private String endpoint = "http://172.22.252.46/csp/huaxi/Huaxi.InvokeMessage.BS.InvokeService.CLS?WSDL";
         private Integer weight = 2;
         private Duration rate = Duration.ofMinutes(10);
         private Date latestAt = new Date(2000 - 1900, Calendar.JANUARY, 1);

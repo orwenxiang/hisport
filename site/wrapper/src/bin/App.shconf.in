@@ -1,7 +1,7 @@
 #! /bin/sh
 
 #
-# Copyright (c) 1999, 2021 Tanuki Software, Ltd.
+# Copyright (c) 1999, 2022 Tanuki Software, Ltd.
 # http://www.tanukisoftware.com
 # All rights reserved.
 #
@@ -12,7 +12,7 @@
 #
 # Java Service Wrapper shconf file.  Suitable for overriding the default
 #  settings of the Wrapper Shell Script.
-# Optimized for use with version 3.5.48 of the Wrapper.
+# Optimized for use with version 3.5.49 of the Wrapper.
 #
 
 #-----------------------------------------------------------------------------

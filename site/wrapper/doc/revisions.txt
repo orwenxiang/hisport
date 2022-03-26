@@ -1,5 +1,20 @@
 Java Service Wrapper Revision History.
 --------------------------------------
+3.5.49
+* Fix high CPU usage observed on certain Unix platforms when running as a
+  console application.  The Windows platform, as well as daemon installations
+  on Unix are not affected.  Since 3.5.47.  Applications using version 3.5.48
+  that do not need to handle stdin may circumvent the issue by
+  adding wrapper.disable_console_input=TRUE to their configuration file.  This
+  workaround is not recommended for 3.5.47 because of another issue (see
+  below).
+* Reintroduce Solaris SPARC releases in the Delta Pack.
+* Fix an issue where the Linux armel and armhf (32-bit) architectures were not
+  correctly loading the native library. This was only a problem when using the
+  Delta Pack.
+* Fix Windows installers that were ignoring the installation directory if it
+  was changed by the user.
+
 3.5.48
 * Fix a critical bug on UNIX where the Wrapper could get stuck and fail to
   restart if a JVM restart was requested by the JVM or Wrapper.  This would

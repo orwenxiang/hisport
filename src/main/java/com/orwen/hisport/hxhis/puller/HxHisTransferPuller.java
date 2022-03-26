@@ -22,7 +22,7 @@ public class HxHisTransferPuller extends AbstractHxHisPatientPuller {
     private HxHisTransferRepository transfers;
 
     @Override
-    public void pull(PullRange pullRange) {
+    protected void doPull(PullRange pullRange) {
         List<HxHisTransferPO> hisTransfers = retrievePatientContent("ZJ-GETPATTRANSFERINFO", pullRange, new TypeReference<>() {
         });
         if (CollectionUtils.isEmpty(hisTransfers)) {

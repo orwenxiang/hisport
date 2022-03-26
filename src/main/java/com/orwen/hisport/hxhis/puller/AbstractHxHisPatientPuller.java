@@ -66,7 +66,17 @@ public abstract class AbstractHxHisPatientPuller {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public abstract void pull(PullRange pullRange);
+    public void pull(PullRange pullRange) {
+        try {
+            log.debug("Doing {} pull with range {}", getClass().getSimpleName(), pullRange);
+            doPull(pullRange);
+            log.debug("Do {} pull with range {} success", getClass().getSimpleName(), pullRange);
+        } catch (Throwable e) {
+            log.warn("Do {} pull with range {} failed", getClass().getSimpleName(), pullRange, e);
+        }
+    }
+
+    protected abstract void doPull(PullRange pullRange);
 
     @SneakyThrows
     protected <T> List<T> retrievePatientContent(String methodCode, PullRange pullRange, TypeReference<T> typeReference) {

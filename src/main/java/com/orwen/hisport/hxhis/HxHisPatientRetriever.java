@@ -6,6 +6,7 @@ import com.orwen.hisport.common.dbaccess.QKeyValuePO;
 import com.orwen.hisport.common.dbaccess.repository.KeyValueRepository;
 import com.orwen.hisport.common.enums.HisPortKey;
 import com.orwen.hisport.hxhis.puller.AbstractHxHisPatientPuller;
+import com.orwen.hisport.utils.DateUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -81,7 +82,7 @@ public class HxHisPatientRetriever implements MessageListener<String> {
         patientPullWeights.remove(instanceId);
     }
 
-    @Scheduled(fixedRateString = "${hisport.hx-his.patient-pull-rate}")
+    @Scheduled(fixedRateString = "${hisport.pull.rate}")
     protected void scheduleSelectDoPullInstance() {
         patientPullWeights.put(instanceId, properties.getPull().getWeight());
         RLock currentInstanceLock = patientPullWeights.getLock(instanceId);
@@ -166,7 +167,8 @@ public class HxHisPatientRetriever implements MessageListener<String> {
         return keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT)).map(KeyValuePO::getValue)
                 .map(Long::valueOf).map(Date::new)
                 .map(date -> new AbstractHxHisPatientPuller.PullRange(date, patientPullDuration))
-                .orElse(new AbstractHxHisPatientPuller.PullRange(properties.getPull().getLatestAt(), patientPullDuration));
+                .orElse(new AbstractHxHisPatientPuller.PullRange(DateUtils.parseDate(properties.getPull().getLatestAt()),
+                        patientPullDuration));
     }
 
     private List<AbstractHxHisPatientPuller.PullRange> calculatePullRanges(

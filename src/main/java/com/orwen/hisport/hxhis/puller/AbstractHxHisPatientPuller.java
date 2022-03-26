@@ -2,42 +2,114 @@ package com.orwen.hisport.hxhis.puller;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orwen.hisport.dispatcher.HisPortDispatcher;
 import com.orwen.hisport.hxhis.HxHisRecordService;
 import com.orwen.hisport.hxhis.dbaccess.HxHisRecordPO;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.time.Duration;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Getter
-@RequiredArgsConstructor
 public abstract class AbstractHxHisPatientPuller {
+    private static final String PULL_HIS_PATIENT_URI = "/csp/huaxi/Huaxi.InvokeMessage.BS.InvokeService.CLS";
+    private static final String WS_SOAP_MESSAGE_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:int=\"http://hospital.service.com/interface\">\n" +
+            "   <soapenv:Header/>\n" +
+            "   <soapenv:Body>\n" +
+            "      <int:InvokeToString>\n" +
+            "         <int:Method>REQUEST_METHOD</int:Method>\n" +
+            "         <int:DataString>REQUEST_BODY</int:DataString>\n" +
+            "      </int:InvokeToString>\n" +
+            "   </soapenv:Body>\n" +
+            "</soapenv:Envelope>";
+    private static final HttpHeaders DEFAULT_MODIFY_HEADERS = HttpHeaders.readOnlyHttpHeaders(new HttpHeaders(new LinkedMultiValueMap<>(
+            Map.of("Content-Type", List.of("text/xml;charset=UTF-8")))));
+
+    private static final String REQUEST_METHOD = "REQUEST_METHOD";
+    private static final String REQUEST_BODY = "REQUEST_BODY";
+    private static final String RETURN_START_KEY = "<InvokeToStringResult>";
+    private static final String RETURN_END_KEY = "</InvokeToStringResult>";
+
 
     @Autowired
     protected HisPortDispatcher dispatcher;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    protected HxHisRecordService recordService;
 
     @Autowired
-    protected HxHisRecordService recordService;
+    @Qualifier("patientPullerRestTemplate")
+    private RestTemplate patientPullerRestTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public abstract void pull(PullRange pullRange);
 
-    //TODO
+    @SneakyThrows
     protected <T> List<T> retrievePatientContent(String methodCode, PullRange pullRange, TypeReference<T> typeReference) {
-        return Collections.emptyList();
+        String response = retrievePatientContent(methodCode, objectMapper.writeValueAsString(pullRange));
+        if (!StringUtils.hasText(response)) {
+            return Collections.emptyList();
+        }
+        PullResponse<ObjectNode> pullResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+        if (!pullResponse.isSuccess()) {
+            throw new RuntimeException("Failed to pull patient with message " + pullResponse.getMessage());
+        }
+        return pullResponse.getContents().stream().map(content -> {
+            try {
+                return objectMapper.writeValueAsBytes(content);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("failed write content as bytes");
+            }
+        }).map(content -> {
+            try {
+                return objectMapper.readValue(content, typeReference);
+            } catch (IOException e) {
+                throw new RuntimeException("failed read values to type " + typeReference);
+            }
+        }).collect(Collectors.toList());
+    }
+
+    private String retrievePatientContent(String methodCode, String requestStr) {
+        String requestBody = WS_SOAP_MESSAGE_TEMPLATE.replace(REQUEST_METHOD, methodCode).replace(REQUEST_BODY, requestStr);
+        ResponseEntity<String> responseEntity = patientPullerRestTemplate.exchange(PULL_HIS_PATIENT_URI, HttpMethod.POST,
+                new HttpEntity<>(requestBody, DEFAULT_MODIFY_HEADERS), new ParameterizedTypeReference<>() {
+                });
+        if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+            log.warn("Failed request pull his patient with method {} and request string {}", methodCode, requestStr);
+            return null;
+        }
+        String rawResponseBody = responseEntity.getBody();
+        log.debug("Retrieve patient response by method code {} and request pull range {}  with raw body {}",
+                methodCode, requestStr, rawResponseBody);
+        if (rawResponseBody == null || !rawResponseBody.contains(RETURN_START_KEY) || !rawResponseBody.contains(RETURN_END_KEY)) {
+            log.warn("The response not contain return {} field", REQUEST_BODY);
+            return null;
+        }
+        return rawResponseBody.substring(rawResponseBody.indexOf(RETURN_START_KEY) + RETURN_START_KEY.length(),
+                rawResponseBody.indexOf(RETURN_END_KEY));
     }
 
     @SneakyThrows
@@ -50,9 +122,23 @@ public abstract class AbstractHxHisPatientPuller {
         recordService.storeRecord(hisRecordPO);
     }
 
-    public static Stream<PullRange> streamPullRange(PullRange startAt, Duration duration) {
-        return Stream.iterate(startAt, current -> !current.isBiggerThanNow(), current -> current.nextDuration(duration));
+    @Getter
+    @Setter
+    @ToString
+    private static class PullResponse<T> {
+        @JsonProperty("resultCode")
+        private String code;
+        @JsonProperty("errorMsg")
+        private String message;
+        @JsonProperty("data")
+        private List<T> contents;
+
+        @JsonIgnore
+        public boolean isSuccess() {
+            return Objects.equals(code, "0");
+        }
     }
+
 
     @Getter
     @Setter

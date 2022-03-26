@@ -5,14 +5,21 @@ import com.orwen.hisport.common.dbaccess.repository.DBAccessRepositoryImpl;
 import com.orwen.hisport.defs.HxPortDefs;
 import org.redisson.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.client.RootUriTemplateHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 
@@ -23,6 +30,9 @@ import java.util.concurrent.ForkJoinPool;
 @EnableConfigurationProperties(HisPortProperties.class)
 @EnableJpaRepositories(basePackages = "com.orwen.hisport", repositoryBaseClass = DBAccessRepositoryImpl.class)
 public class HisPortAutoConfiguration {
+    @Autowired
+    private HisPortProperties properties;
+
     @Autowired
     private RedissonClient redissonClient;
 
@@ -40,6 +50,22 @@ public class HisPortAutoConfiguration {
     @Bean(name = "patientPullerTopic")
     public RTopic patientPullerTopic() {
         return redissonClient.getTopic(HxPortDefs.PATIENT_PULLER_TOPIC);
+    }
+
+    @Bean("patientPullerRestTemplate")
+    @ConditionalOnMissingBean(name = "patientPullerRestTemplate")
+    public RestTemplate patientPullerRestTemplate() {
+        RestTemplate restTemplate = new RestTemplate();
+
+        restTemplate.setUriTemplateHandler(new RootUriTemplateHandler(properties.getPull().getEndpoint()));
+
+        StringHttpMessageConverter messageConverter = new StringHttpMessageConverter(StandardCharsets.UTF_8);
+        messageConverter.setSupportedMediaTypes(List.
+                of(new MediaType("text", "xml", StandardCharsets.UTF_8)));
+
+        restTemplate.setMessageConverters(List.of(messageConverter));
+
+        return restTemplate;
     }
 
     @Bean("artemisDepartCache")

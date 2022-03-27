@@ -36,5 +36,5 @@ public class ArtemisDepartPO extends AbstractPersistable {
 
     @JsonIgnore
     @Column(name = "enabled")
-    public Boolean enabled;
+    private Boolean enabled;
 }

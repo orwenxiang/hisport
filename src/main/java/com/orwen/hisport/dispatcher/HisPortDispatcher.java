@@ -36,7 +36,7 @@ public class HisPortDispatcher {
         departPO.setParentId(StringUtils.hasText(departDTO.getParent()) ? departDTO.getParent() : "-1");
         departPO.setName(departDTO.getName());
         departPO.setEnabled(departDTO.isEnable());
-        rabbitOperation.convertAndSend(HxPortDefs.DEPART_CHANGED_QUEUE, new ArtemisDepartPO());
+        rabbitOperation.convertAndSend(HxPortDefs.DEPART_CHANGED_QUEUE, departPO);
     }
 
     public void staffChanged(HxHisStaffDTO staffDTO) {

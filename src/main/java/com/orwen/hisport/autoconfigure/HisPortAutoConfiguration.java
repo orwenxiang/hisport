@@ -35,8 +35,8 @@ public class HisPortAutoConfiguration {
     @Autowired
     private RedissonClient redissonClient;
 
-    @Bean(destroyMethod = "shutdown", name = "pullHxHisExecutor")
-    public ExecutorService pullHxHisExecutor() {
+    @Bean(destroyMethod = "shutdown", name = "patientPullExecutor")
+    public ExecutorService patientPullExecutor() {
         return new ForkJoinPool(Runtime.getRuntime().availableProcessors());
     }
 
@@ -49,6 +49,14 @@ public class HisPortAutoConfiguration {
     @Bean(name = "patientPullerTopic")
     public RTopic patientPullerTopic() {
         return redissonClient.getTopic(HxPortDefs.PATIENT_PULLER_TOPIC);
+    }
+
+    @Bean(name = "patientPullRate")
+    public RRateLimiter patientPullRate() {
+        RRateLimiter rateLimiter = redissonClient.getRateLimiter("patient_pull_rates");
+        rateLimiter.setRate(RateType.OVERALL, properties.getPull().getRateInSecond(),
+                1, RateIntervalUnit.SECONDS);
+        return rateLimiter;
     }
 
     @Bean("patientPullerRestTemplate")

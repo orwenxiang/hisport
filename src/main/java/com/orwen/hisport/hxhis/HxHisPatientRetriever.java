@@ -48,7 +48,7 @@ public class HxHisPatientRetriever implements MessageListener<String> {
     private RedissonClient redissonClient;
 
     @Autowired
-    private ExecutorService pullHxHisExecutor;
+    private ExecutorService patientPullExecutor;
 
     @Autowired
     private KeyValueRepository keyValues;
@@ -64,13 +64,13 @@ public class HxHisPatientRetriever implements MessageListener<String> {
     @Qualifier("patientPullerTopic")
     private RTopic patientPullerTopic;
 
-    private Duration patientPullDuration;
+    private Duration patientPullRange;
 
     private String instanceId;
 
     @PostConstruct
     void init() {
-        patientPullDuration = properties.getPull().getRate();
+        patientPullRange = properties.getPull().getRange();
         instanceId = redissonClient.getId();
         patientPullerTopic.addListener(String.class, this);
     }
@@ -127,9 +127,9 @@ public class HxHisPatientRetriever implements MessageListener<String> {
         pullLock.lock();
         try {
             AbstractHxHisPatientPuller.PullRange latestPullAt = latestPullAt();
-            List<AbstractHxHisPatientPuller.PullRange> pullRanges = calculatePullRanges(latestPullAt, patientPullDuration);
+            List<AbstractHxHisPatientPuller.PullRange> pullRanges = calculatePullRanges(latestPullAt, patientPullRange);
             if (CollectionUtils.isEmpty(pullRanges)) {
-                log.warn("No pull range define with latest pull at {} with duration {}", latestPullAt, patientPullDuration);
+                log.warn("No pull range define with latest pull at {} with duration {}", latestPullAt, patientPullRange);
                 return;
             }
             hxHisPatientPullers.orderedStream().forEach(patientPuller -> doPullerWithRanges(patientPuller, pullRanges));
@@ -156,7 +156,7 @@ public class HxHisPatientRetriever implements MessageListener<String> {
             return;
         }
         CountDownLatch pullCount = new CountDownLatch(pullRanges.size());
-        pullRanges.forEach(pullRange -> pullHxHisExecutor.submit(() -> {
+        pullRanges.forEach(pullRange -> patientPullExecutor.submit(() -> {
             patientPuller.pull(pullRange);
             pullCount.countDown();
         }));
@@ -166,9 +166,9 @@ public class HxHisPatientRetriever implements MessageListener<String> {
     protected AbstractHxHisPatientPuller.PullRange latestPullAt() {
         return keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT)).map(KeyValuePO::getValue)
                 .map(Long::valueOf).map(Date::new)
-                .map(date -> new AbstractHxHisPatientPuller.PullRange(date, patientPullDuration))
+                .map(date -> new AbstractHxHisPatientPuller.PullRange(date, patientPullRange))
                 .orElse(new AbstractHxHisPatientPuller.PullRange(DateUtils.parseDate(properties.getPull().getLatestAt()),
-                        patientPullDuration));
+                        patientPullRange));
     }
 
     private List<AbstractHxHisPatientPuller.PullRange> calculatePullRanges(

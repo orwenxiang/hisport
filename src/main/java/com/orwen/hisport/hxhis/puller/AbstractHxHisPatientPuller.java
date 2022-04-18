@@ -13,6 +13,7 @@ import com.orwen.hisport.hxhis.HxHisRecordService;
 import com.orwen.hisport.hxhis.dbaccess.HxHisRecordPO;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RRateLimiter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
@@ -33,7 +34,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Getter
 public abstract class AbstractHxHisPatientPuller {
-    private static final String PULL_HIS_PATIENT_URI = "/csp/huaxi/Huaxi.InvokeMessage.BS.InvokeService.CLS";
     private static final String WS_SOAP_MESSAGE_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:int=\"http://hospital.service.com/interface\">\n" +
             "   <soapenv:Header/>\n" +
             "   <soapenv:Body>\n" +
@@ -63,6 +63,10 @@ public abstract class AbstractHxHisPatientPuller {
     @Autowired
     @Qualifier("patientPullerRestTemplate")
     private RestTemplate patientPullerRestTemplate;
+
+    @Autowired
+    @Qualifier("patientPullRate")
+    private RRateLimiter patientPullRate;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -107,6 +111,9 @@ public abstract class AbstractHxHisPatientPuller {
 
     private String retrievePatientContent(String methodCode, String requestStr) {
         String requestBody = WS_SOAP_MESSAGE_TEMPLATE.replace(REQUEST_METHOD, methodCode).replace(REQUEST_BODY, requestStr);
+
+        patientPullRate.acquire();
+
         ResponseEntity<String> responseEntity = patientPullerRestTemplate.exchange(properties.getPull().getEndpoint(), HttpMethod.POST,
                 new HttpEntity<>(requestBody, DEFAULT_MODIFY_HEADERS), new ParameterizedTypeReference<>() {
                 });

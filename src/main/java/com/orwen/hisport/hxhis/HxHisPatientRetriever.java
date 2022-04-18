@@ -82,7 +82,7 @@ public class HxHisPatientRetriever implements MessageListener<String> {
         patientPullWeights.remove(instanceId);
     }
 
-    @Scheduled(fixedRateString = "${hisport.pull.rate}")
+    @Scheduled(fixedRateString = "${hisport.pull.range}")
     protected void scheduleSelectDoPullInstance() {
         patientPullWeights.put(instanceId, properties.getPull().getWeight());
         RLock currentInstanceLock = patientPullWeights.getLock(instanceId);

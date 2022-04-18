@@ -128,7 +128,7 @@ public abstract class AbstractHxHisPatientPuller {
         log.debug("Retrieve patient response by method code {} and request pull range {}  with raw body {}",
                 methodCode, requestStr, rawResponseBody);
         if (rawResponseBody == null || !rawResponseBody.contains(RETURN_START_KEY) || !rawResponseBody.contains(RETURN_END_KEY)) {
-            log.warn("The response not contain return {} field", REQUEST_BODY);
+            log.warn("The response not contain return {} and {} field", RETURN_START_KEY, RETURN_END_KEY);
             return null;
         }
         return rawResponseBody.substring(rawResponseBody.indexOf(RETURN_START_KEY) + RETURN_START_KEY.length(),

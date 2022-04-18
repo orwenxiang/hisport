@@ -29,7 +29,7 @@ public class HxHisCarePuller extends AbstractHxHisPatientPuller {
             return;
         }
         Date latestPullAt = pullRange.getEndDate();
-        hisCares.parallelStream().forEach(hisCare -> cares.findOne(qCare.certNum.eq(hisCare.getCertNum())
+        hisCares.forEach(hisCare -> cares.findOne(qCare.certNum.eq(hisCare.getCertNum())
                 .and(qCare.latestPullAt.eq(latestPullAt))).ifPresentOrElse(carePO -> {
                     log.debug("The patient care with cert num {} and name {} is existed that pulled at {}",
                             hisCare.getCertNum(), hisCare.getName(), latestPullAt);

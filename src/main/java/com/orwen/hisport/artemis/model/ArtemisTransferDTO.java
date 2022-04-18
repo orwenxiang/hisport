@@ -1,5 +1,6 @@
 package com.orwen.hisport.artemis.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,5 +23,6 @@ public class ArtemisTransferDTO implements Serializable {
     private String toDepartId;
 
     @JsonProperty("transferTime")
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss", timezone = "GMT+8")
     private Date transferAt;
 }

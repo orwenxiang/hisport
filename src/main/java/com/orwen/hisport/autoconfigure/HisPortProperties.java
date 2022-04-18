@@ -25,6 +25,7 @@ public class HisPortProperties {
         private Duration range = Duration.ofMinutes(10);
         private Integer rateInSecond = 8;
         private String latestAt = "2020-01-01";
+        private String maxPullAt;
     }
 
 

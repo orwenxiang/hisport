@@ -14,7 +14,6 @@ import java.util.Objects;
 @ToString
 public class ArtemisResponse<T> implements Serializable {
     private static final long serialVersionUID = 1L;
-
     private static final String SUCCESS_CODE = "0";
 
     private String code;

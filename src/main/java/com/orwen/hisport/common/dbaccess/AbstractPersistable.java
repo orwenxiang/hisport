@@ -30,6 +30,7 @@ public abstract class AbstractPersistable implements Persistable<Long>, Serializ
     private Long version;
 
     @Transient
+    @org.springframework.data.annotation.Transient
     public boolean isNew() {
         return null == this.getId();
     }

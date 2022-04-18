@@ -1,5 +1,6 @@
 package com.orwen.hisport.hxhis.dbaccess;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.orwen.hisport.common.dbaccess.AbstractPersistable;
@@ -33,6 +34,7 @@ public class HxHisTransferPO extends AbstractPersistable {
     @JsonProperty("transferTime")
     @Column(name = "transfer_at")
     @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date transferAt;
 
     @JsonIgnore

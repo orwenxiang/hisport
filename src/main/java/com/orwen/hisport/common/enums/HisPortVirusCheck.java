@@ -17,6 +17,10 @@ public enum HisPortVirusCheck implements EnumStrTyped<HisPortVirusCheck> {
     CHECKING("2"),
 
     ;
-
     private final String type;
+
+
+    public static final class Deserializer extends EnumStrTyped.Deserializer<HisPortVirusCheck> {
+
+    }
 }

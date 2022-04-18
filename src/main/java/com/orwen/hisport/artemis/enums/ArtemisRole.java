@@ -1,5 +1,6 @@
 package com.orwen.hisport.artemis.enums;
 
+import com.orwen.hisport.common.enums.HisPortVirusCheck;
 import com.orwen.hisport.utils.EnumStrTyped;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -24,4 +25,8 @@ public enum ArtemisRole implements EnumStrTyped<ArtemisRole> {
     ;
 
     private final String type;
+
+    public static final class Deserializer extends EnumStrTyped.Deserializer<ArtemisRole> {
+
+    }
 }

@@ -21,7 +21,9 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -49,8 +51,11 @@ public abstract class AbstractHxHisPatientPuller {
 
     private static final String REQUEST_METHOD = "REQUEST_METHOD";
     private static final String REQUEST_BODY = "REQUEST_BODY";
-    private static final String RETURN_START_KEY = "<InvokeToStringResult><![CDATA[";
-    private static final String RETURN_END_KEY = "]]></InvokeToStringResult>";
+    private static final String RETURN_START_KEY_1 = "<InvokeToStringResult><![CDATA[";
+    private static final String RETURN_END_KEY_1 = "]]></InvokeToStringResult>";
+
+    private static final String RETURN_START_KEY_2 = "<InvokeToStringResult>";
+    private static final String RETURN_END_KEY_2 = "</InvokeToStringResult>";
     @Autowired
     private HisPortProperties properties;
 
@@ -94,17 +99,21 @@ public abstract class AbstractHxHisPatientPuller {
         if (!pullResponse.isSuccess()) {
             throw new RuntimeException("Failed to pull patient with message " + pullResponse.getMessage());
         }
+        if (CollectionUtils.isEmpty(pullResponse.getContents())) {
+            log.debug("Empty content for {} with method {} in range {}", getClass().getSimpleName(), methodCode, pullRange);
+            return Collections.emptyList();
+        }
         return pullResponse.getContents().stream().map(content -> {
             try {
                 return objectMapper.writeValueAsBytes(content);
             } catch (JsonProcessingException e) {
-                throw new RuntimeException("failed write content as bytes");
+                throw new RuntimeException("failed write content as bytes", e);
             }
         }).map(content -> {
             try {
                 return objectMapper.readValue(content, typeReference);
             } catch (IOException e) {
-                throw new RuntimeException("failed read values to type " + typeReference);
+                throw new RuntimeException("failed read values to type " + typeReference, e);
             }
         }).collect(Collectors.toList());
     }
@@ -113,8 +122,6 @@ public abstract class AbstractHxHisPatientPuller {
         String requestBody = WS_SOAP_MESSAGE_TEMPLATE.replace(REQUEST_METHOD, methodCode).replace(REQUEST_BODY, requestStr);
 
         patientPullRate.acquire();
-
-        log.debug("Do patient pull with request body {}", requestBody);
 
         ResponseEntity<String> responseEntity = patientPullerRestTemplate.exchange(properties.getPull().getEndpoint(), HttpMethod.POST,
                 new HttpEntity<>(requestBody, DEFAULT_MODIFY_HEADERS), new ParameterizedTypeReference<>() {
@@ -127,12 +134,18 @@ public abstract class AbstractHxHisPatientPuller {
         String rawResponseBody = responseEntity.getBody();
         log.debug("Retrieve patient response by method code {} and request pull range {}  with raw body {}",
                 methodCode, requestStr, rawResponseBody);
-        if (rawResponseBody == null || !rawResponseBody.contains(RETURN_START_KEY) || !rawResponseBody.contains(RETURN_END_KEY)) {
-            log.warn("The response not contain return {} and {} field", RETURN_START_KEY, RETURN_END_KEY);
+        if (rawResponseBody == null || (!rawResponseBody.contains(RETURN_START_KEY_1) || !rawResponseBody.contains(RETURN_END_KEY_1))
+                && (!rawResponseBody.contains(RETURN_START_KEY_2) || !rawResponseBody.contains(RETURN_END_KEY_2))) {
+            log.warn("The response {} not contain return {} or {} and {} or {} field", rawResponseBody,
+                    RETURN_START_KEY_1, RETURN_START_KEY_2, RETURN_END_KEY_1, RETURN_END_KEY_2);
             return null;
         }
-        return rawResponseBody.substring(rawResponseBody.indexOf(RETURN_START_KEY) + RETURN_START_KEY.length(),
-                rawResponseBody.indexOf(RETURN_END_KEY));
+        if (rawResponseBody.contains(RETURN_END_KEY_1)) {
+            return rawResponseBody.substring(rawResponseBody.indexOf(RETURN_START_KEY_1) + RETURN_START_KEY_1.length(),
+                    rawResponseBody.indexOf(RETURN_END_KEY_1));
+        }
+        return rawResponseBody.substring(rawResponseBody.indexOf(RETURN_START_KEY_2) + RETURN_START_KEY_2.length(),
+                rawResponseBody.indexOf(RETURN_END_KEY_2));
     }
 
     @SneakyThrows
@@ -149,8 +162,10 @@ public abstract class AbstractHxHisPatientPuller {
     @Setter
     @ToString
     private static class PullResponse<T> {
+        private static final String NO_DATA_CODE = "-102";
         @JsonProperty("resultCode")
         private String code;
+
         @JsonProperty("errorMsg")
         private String message;
         @JsonProperty("data")
@@ -158,7 +173,7 @@ public abstract class AbstractHxHisPatientPuller {
 
         @JsonIgnore
         public boolean isSuccess() {
-            return Objects.equals(code, "0");
+            return Objects.equals(code, "0") || Objects.equals(code, NO_DATA_CODE) && ObjectUtils.isEmpty(contents);
         }
     }
 
@@ -183,7 +198,6 @@ public abstract class AbstractHxHisPatientPuller {
         public PullRange(Date startAt, Duration duration) {
             Calendar start = Calendar.getInstance();
             start.setTime(startAt);
-            start.add(Calendar.SECOND, -1);
 
             this.startDate = start.getTime();
             this.startTime = this.startDate;
@@ -193,8 +207,8 @@ public abstract class AbstractHxHisPatientPuller {
         }
 
         @JsonIgnore
-        public boolean isBiggerThanNow() {
-            return startDate.after(new Date()) || endDate.after(new Date());
+        public boolean isBiggerThan(Date at) {
+            return startDate.after(at) || endDate.after(at);
         }
 
         @JsonIgnore

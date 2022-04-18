@@ -1,5 +1,6 @@
 package com.orwen.hisport.artemis.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,5 +17,6 @@ public class ArtemisLeaveDTO implements Serializable {
     private String personId;
 
     @JsonProperty("outHospital")
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss", timezone = "GMT+8")
     private Date leaveAt;
 }

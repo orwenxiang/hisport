@@ -67,8 +67,7 @@ public class HisPortDispatcher {
 
     public void patientLeave(HxHisLeavePO leavePO) {
         ArtemisLeaveDTO artemisLeaveDTO = new ArtemisLeaveDTO();
-        artemisLeaveDTO.setPersonId(leavePO.getPersonId());
-        artemisLeaveDTO.setLeaveAt(leavePO.getLeaveAt());
+        BeanUtils.copyProperties(leavePO, artemisLeaveDTO);
         rabbitOperation.convertAndSend(HxPortDefs.PATIENT_LEAVED_QUEUE, artemisLeaveDTO);
     }
 

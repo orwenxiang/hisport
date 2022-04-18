@@ -103,7 +103,8 @@ public class ArtemisClient {
     protected void syncDepart(Collection<ArtemisDepartPO> departs) {
         ArtemisResponse<Void> response = doRequest("/orgSync", departs, new TypeReference<>() {
         });
-        checkResponse(response, departs, "Failed to sync department ");
+        checkResponse(response, departs, "Failed to sync department");
+        log.debug("Success access artemis to department sync with department is {}", departs.size());
     }
 
     @SneakyThrows
@@ -111,7 +112,8 @@ public class ArtemisClient {
     public void staffJoin(ArtemisStaffDTO staffDTO) {
         ArtemisResponse<Void> response = doRequest("/insiderAdd", staffDTO, new TypeReference<>() {
         });
-        checkResponse(response, staffDTO, "Failed to sync staff join ");
+        checkResponse(response, staffDTO, "Failed to sync staff join");
+        log.debug("Success access artemis to staff join with body {}", staffDTO);
     }
 
     @SneakyThrows
@@ -120,6 +122,7 @@ public class ArtemisClient {
         ArtemisResponse<Void> response = doRequest("/insiderDel", leaveHospitalDTO, new TypeReference<>() {
         });
         checkResponse(response, leaveHospitalDTO, "Failed to sync staff leave ");
+        log.debug("Success access artemis to staff leave with body {}", leaveHospitalDTO);
     }
 
     @SneakyThrows
@@ -127,7 +130,8 @@ public class ArtemisClient {
     public void patientJoin(ArtemisPatientDTO patientDTO) {
         ArtemisResponse<Void> response = doRequest("/patientAdd", patientDTO, new TypeReference<>() {
         });
-        checkResponse(response, patientDTO, "Failed to sync patient join ");
+        checkResponse(response, patientDTO, "Failed to sync patient join");
+        log.debug("Success access artemis to patient join with body {}", patientDTO);
     }
 
     @SneakyThrows
@@ -136,6 +140,7 @@ public class ArtemisClient {
         ArtemisResponse<Void> response = doRequest("/patientDel", leaveHospitalDTO, new TypeReference<>() {
         });
         checkResponse(response, leaveHospitalDTO, "Failed to sync patient leave ");
+        log.debug("Success access artemis to patient leave with body {}", leaveHospitalDTO);
     }
 
     @SneakyThrows
@@ -143,7 +148,8 @@ public class ArtemisClient {
     public void patientTransfer(ArtemisTransferDTO transferDTO) {
         ArtemisResponse<Void> response = doRequest("/patientTransfer", transferDTO, new TypeReference<>() {
         });
-        checkResponse(response, transferDTO, "Failed to sync patient transfer ");
+        checkResponse(response, transferDTO, "Failed to sync patient transfer");
+        log.debug("Success access artemis to patient transfer with body {}", transferDTO);
     }
 
     @SneakyThrows
@@ -152,6 +158,7 @@ public class ArtemisClient {
         ArtemisResponse<Void> response = doRequest("/phAdd", careDTO, new TypeReference<>() {
         });
         checkResponse(response, careDTO, "Failed to sync care join ");
+        log.debug("Success access artemis to care join with body {}", careDTO);
     }
 
     @SneakyThrows
@@ -166,7 +173,7 @@ public class ArtemisClient {
     protected <T> T doRequest(String pathPrefix, Object body, @Nullable TypeReference<T> typeReference) {
         log.debug("Do hikvision artemis request with prefix {} and body {}", pathPrefix, body);
         String result = ArtemisHttpUtil.doPostStringArtemis(withRequestPath(pathPrefix),
-                objectMapper.writeValueAsString(body), null, null, CONTENT_TYPE, null);
+                objectMapper.writeValueAsString(body), null, CONTENT_TYPE, CONTENT_TYPE, null);
         log.debug("Do hikvision artemis request with response {}", result);
         if (typeReference == null) {
             return null;
@@ -175,6 +182,8 @@ public class ArtemisClient {
     }
 
     private Map<String, String> withRequestPath(String prefix) {
-        return Map.of(artemisConfig.getSchema(), artemisConfig.getHisMsPrefix() + prefix);
+        Map<String, String> requestPath = Map.of(artemisConfig.getSchema(), artemisConfig.getHisMsPrefix() + prefix);
+        log.debug("Using request path {}", requestPath);
+        return requestPath;
     }
 }

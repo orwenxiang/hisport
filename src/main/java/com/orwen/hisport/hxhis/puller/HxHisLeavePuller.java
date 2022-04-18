@@ -29,7 +29,7 @@ public class HxHisLeavePuller extends AbstractHxHisPatientPuller {
             return;
         }
         Date latestPullAt = pullRange.getEndDate();
-        hisLeaves.parallelStream().forEach(hisLeave -> leaves.findOne(qLeave.personId.eq(hisLeave.getPersonId())
+        hisLeaves.forEach(hisLeave -> leaves.findOne(qLeave.personId.eq(hisLeave.getPersonId())
                 .and(qLeave.leaveAt.eq(hisLeave.getLeaveAt()))).ifPresentOrElse(leavePO -> {
                     log.debug("The patient leave with id {} and at {} is existed that pulled at {}",
                             hisLeave.getPersonId(), hisLeave.getLeaveAt(), leavePO.getLatestPullAt());

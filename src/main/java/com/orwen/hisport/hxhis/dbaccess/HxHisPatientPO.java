@@ -1,14 +1,16 @@
 package com.orwen.hisport.hxhis.dbaccess;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.orwen.hisport.common.dbaccess.AbstractPersistable;
 import com.orwen.hisport.common.enums.HisPortGender;
 import com.orwen.hisport.common.enums.HisPortVirusCheck;
-import com.orwen.hisport.utils.BoolToIntSerializer;
-import com.orwen.hisport.utils.EnumIntTyped;
+import com.orwen.hisport.utils.BoolToIntStrSerializer;
 import com.orwen.hisport.utils.EnumStrTyped;
+import com.orwen.hisport.utils.IntStrToBoolDeserializer;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -30,7 +32,7 @@ public class HxHisPatientPO extends AbstractPersistable {
     @Column(name = "name", length = 32)
     private String name;
 
-    @JsonProperty("orgId")
+    @JsonProperty("orgCode")
     @Column(name = "depart_id", length = 48)
     private String departId;
 
@@ -45,7 +47,8 @@ public class HxHisPatientPO extends AbstractPersistable {
     @JsonProperty("gender")
     @Enumerated(EnumType.STRING)
     @Column(name = "gender", length = 20)
-    @JsonSerialize(using = EnumIntTyped.Serializer.class)
+    @JsonSerialize(using = EnumStrTyped.Serializer.class)
+    @JsonDeserialize(using = HisPortGender.Deserializer.class)
     private HisPortGender gender;
 
     @JsonProperty("hospitalId")
@@ -59,17 +62,20 @@ public class HxHisPatientPO extends AbstractPersistable {
     @JsonProperty("inHospital")
     @Column(name = "in_hospital")
     @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date inHospital;
 
     @JsonProperty("virusCheck")
     @Enumerated(EnumType.STRING)
     @Column(name = "virus_check", length = 32)
     @JsonSerialize(using = EnumStrTyped.Serializer.class)
+    @JsonDeserialize(using = HisPortVirusCheck.Deserializer.class)
     private HisPortVirusCheck virusCheck;
 
     @JsonProperty("erFlag")
     @Column(name = "emergence")
-    @JsonSerialize(using = BoolToIntSerializer.class)
+    @JsonSerialize(using = BoolToIntStrSerializer.class)
+    @JsonDeserialize(using = IntStrToBoolDeserializer.class)
     private Boolean emergence;
 
     @JsonProperty("relationName")

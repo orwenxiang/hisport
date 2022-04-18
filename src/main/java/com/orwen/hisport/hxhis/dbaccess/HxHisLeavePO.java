@@ -1,5 +1,6 @@
 package com.orwen.hisport.hxhis.dbaccess;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.orwen.hisport.common.dbaccess.AbstractPersistable;
@@ -24,6 +25,7 @@ public class HxHisLeavePO extends AbstractPersistable {
     @Column(name = "leave_at")
     @JsonProperty("inChargeTime")
     @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date leaveAt;
 
     @JsonIgnore

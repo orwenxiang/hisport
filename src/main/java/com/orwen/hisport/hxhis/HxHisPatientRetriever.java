@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -83,7 +84,7 @@ public class HxHisPatientRetriever implements MessageListener<String> {
     }
 
     @Scheduled(fixedRateString = "${hisport.pull.range}")
-    protected void scheduleSelectDoPullInstance() {
+    public void scheduleSelectDoPullInstance() {
         patientPullWeights.put(instanceId, properties.getPull().getWeight());
         RLock currentInstanceLock = patientPullWeights.getLock(instanceId);
         if (!currentInstanceLock.isLocked()) {
@@ -131,6 +132,8 @@ public class HxHisPatientRetriever implements MessageListener<String> {
             if (CollectionUtils.isEmpty(pullRanges)) {
                 log.warn("No pull range define with latest pull at {} with duration {}", latestPullAt, patientPullRange);
                 return;
+            } else {
+                log.debug("Do patient pull with ranges {}", pullRanges);
             }
             hxHisPatientPullers.orderedStream().forEach(patientPuller -> doPullerWithRanges(patientPuller, pullRanges));
             Date latestPullDate = pullRanges.get(pullRanges.size() - 1).getEndDate();
@@ -167,12 +170,17 @@ public class HxHisPatientRetriever implements MessageListener<String> {
         return keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT)).map(KeyValuePO::getValue)
                 .map(Long::valueOf).map(Date::new)
                 .map(date -> new AbstractHxHisPatientPuller.PullRange(date, patientPullRange))
-                .orElse(new AbstractHxHisPatientPuller.PullRange(DateUtils.parseDate(properties.getPull().getLatestAt()),
-                        patientPullRange));
+                .orElse(new AbstractHxHisPatientPuller.PullRange(DateUtils
+                        .parseStartAt(properties.getPull().getLatestAt()), patientPullRange));
     }
 
     private List<AbstractHxHisPatientPuller.PullRange> calculatePullRanges(
             AbstractHxHisPatientPuller.PullRange startAt, Duration duration) {
-        return Stream.iterate(startAt, current -> !current.isBiggerThanNow(), current -> current.nextDuration(duration)).toList();
+
+        Date maxPullAt = StringUtils.hasText(properties.getPull().getMaxPullAt()) ?
+                DateUtils.parseEndAt(properties.getPull().getMaxPullAt()) : new Date();
+
+        return Stream.iterate(startAt, current -> !current.isBiggerThan(maxPullAt),
+                current -> current.nextDuration(duration)).toList();
     }
 }

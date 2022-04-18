@@ -114,9 +114,12 @@ public abstract class AbstractHxHisPatientPuller {
 
         patientPullRate.acquire();
 
+        log.debug("Do patient pull with request body {}", requestBody);
+
         ResponseEntity<String> responseEntity = patientPullerRestTemplate.exchange(properties.getPull().getEndpoint(), HttpMethod.POST,
                 new HttpEntity<>(requestBody, DEFAULT_MODIFY_HEADERS), new ParameterizedTypeReference<>() {
                 });
+
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
             log.warn("Failed request pull his patient with method {} and request string {}", methodCode, requestStr);
             return null;

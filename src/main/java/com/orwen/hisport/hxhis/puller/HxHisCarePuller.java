@@ -23,7 +23,7 @@ public class HxHisCarePuller extends AbstractHxHisPatientPuller {
 
     @Override
     protected void doPull(PullRange pullRange) {
-        List<HxHisCarePO> hisCares = retrievePatientContent("ZJ-GETPATESCORTINFO", pullRange, new TypeReference<>() {
+        List<HxHisCarePO> hisCares = retrievePatientContent(false, "ZJ-GETPATESCORTINFO", pullRange, new TypeReference<>() {
         });
         if (CollectionUtils.isEmpty(hisCares)) {
             return;

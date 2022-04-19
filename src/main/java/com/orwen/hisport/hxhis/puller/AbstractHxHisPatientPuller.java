@@ -36,13 +36,23 @@ import java.util.stream.Collectors;
 @Slf4j
 @Getter
 public abstract class AbstractHxHisPatientPuller {
-    private static final String WS_SOAP_MESSAGE_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:int=\"http://hospital.service.com/interface\">\n" +
+    private static final String TO_STRING_WS_SOAP_MESSAGE_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:int=\"http://hospital.service.com/interface\">\n" +
             "   <soapenv:Header/>\n" +
             "   <soapenv:Body>\n" +
             "      <int:InvokeToString>\n" +
             "         <int:Method>REQUEST_METHOD</int:Method>\n" +
             "         <int:DataString><![CDATA[REQUEST_BODY]]></int:DataString>\n" +
             "      </int:InvokeToString>\n" +
+            "   </soapenv:Body>\n" +
+            "</soapenv:Envelope>";
+
+    private static final String TO_STREAM_WS_SOAP_MESSAGE_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:int=\"http://hospital.service.com/interface\">\n" +
+            "   <soapenv:Header/>\n" +
+            "   <soapenv:Body>\n" +
+            "      <int:InvokeToStream>\n" +
+            "         <int:Method>REQUEST_METHOD</int:Method>\n" +
+            "         <int:DataString><![CDATA[REQUEST_BODY]]></int:DataString>\n" +
+            "      </int:InvokeToStream>\n" +
             "   </soapenv:Body>\n" +
             "</soapenv:Envelope>";
     private static final HttpHeaders DEFAULT_MODIFY_HEADERS = HttpHeaders.readOnlyHttpHeaders(new HttpHeaders(new LinkedMultiValueMap<>(
@@ -89,8 +99,8 @@ public abstract class AbstractHxHisPatientPuller {
     protected abstract void doPull(PullRange pullRange);
 
     @SneakyThrows
-    protected <T> List<T> retrievePatientContent(String methodCode, PullRange pullRange, TypeReference<T> typeReference) {
-        String response = retrievePatientContent(methodCode, objectMapper.writeValueAsString(pullRange));
+    protected <T> List<T> retrievePatientContent(boolean toString, String methodCode, PullRange pullRange, TypeReference<T> typeReference) {
+        String response = retrievePatientContent(toString, methodCode, objectMapper.writeValueAsString(pullRange));
         if (!StringUtils.hasText(response)) {
             return Collections.emptyList();
         }
@@ -118,8 +128,9 @@ public abstract class AbstractHxHisPatientPuller {
         }).collect(Collectors.toList());
     }
 
-    private String retrievePatientContent(String methodCode, String requestStr) {
-        String requestBody = WS_SOAP_MESSAGE_TEMPLATE.replace(REQUEST_METHOD, methodCode).replace(REQUEST_BODY, requestStr);
+    private String retrievePatientContent(boolean toString, String methodCode, String requestStr) {
+        String requestBody = (toString ? TO_STRING_WS_SOAP_MESSAGE_TEMPLATE : TO_STREAM_WS_SOAP_MESSAGE_TEMPLATE)
+                .replace(REQUEST_METHOD, methodCode).replace(REQUEST_BODY, requestStr);
 
         patientPullRate.acquire();
 

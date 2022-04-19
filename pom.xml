@@ -195,7 +195,7 @@
                                             </property>
                                             <property>
                                                 <name>wrapper.logfile.maxsize</name>
-                                                <value>128m</value>
+                                                <value>512m</value>
                                             </property>
                                             <property>
                                                 <name>wrapper.logfile.maxfiles</name>

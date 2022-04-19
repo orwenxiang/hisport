@@ -138,8 +138,6 @@ public abstract class AbstractHxHisPatientPuller {
 
         patientPullRate.acquire();
 
-        log.debug("Do patient pull with request body {}", requestBody);
-
         ResponseEntity<String> responseEntity = patientPullerRestTemplate.exchange(properties.getPull().getEndpoint(), HttpMethod.POST,
                 new HttpEntity<>(requestBody, toString ? TO_STRING_HEADERS : TO_STREAM_HEADERS), new ParameterizedTypeReference<>() {
                 });
@@ -150,6 +148,7 @@ public abstract class AbstractHxHisPatientPuller {
         }
 
         String rawResponseBody = responseEntity.getBody();
+        
         log.debug("Retrieve patient response by method code {} and request pull range {}  with raw body {}", methodCode, requestStr, rawResponseBody);
 
         return splitRawResponse(rawResponseBody, toString ? RETURN_START_KEY_TO_STRING : RETURN_START_KEY_TO_STREAM,

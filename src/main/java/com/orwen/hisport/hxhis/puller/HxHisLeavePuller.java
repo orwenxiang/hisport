@@ -15,7 +15,7 @@ import java.util.List;
 
 @Slf4j
 @Order(2)
-//@Component
+@Component
 public class HxHisLeavePuller extends AbstractHxHisPatientPuller {
     private static final QHxHisLeavePO qLeave = QHxHisLeavePO.hxHisLeavePO;
     @Autowired

@@ -211,8 +211,6 @@ public class ArtemisClient {
     }
 
     private Map<String, String> withRequestPath(String prefix) {
-        Map<String, String> requestPath = Map.of(artemisConfig.getSchema(), artemisConfig.getHisMsPrefix() + prefix);
-        log.debug("Using request path {}", requestPath);
-        return requestPath;
+        return Map.of(artemisConfig.getSchema(), artemisConfig.getHisMsPrefix() + prefix);
     }
 }

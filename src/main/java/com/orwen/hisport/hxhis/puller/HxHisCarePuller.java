@@ -15,7 +15,7 @@ import java.util.List;
 
 @Slf4j
 @Order(4)
-//@Component
+@Component
 public class HxHisCarePuller extends AbstractHxHisPatientPuller {
     private static final QHxHisCarePO qCare = QHxHisCarePO.hxHisCarePO;
     @Autowired

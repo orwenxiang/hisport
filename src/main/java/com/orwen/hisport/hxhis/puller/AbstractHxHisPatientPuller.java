@@ -36,36 +36,40 @@ import java.util.stream.Collectors;
 @Slf4j
 @Getter
 public abstract class AbstractHxHisPatientPuller {
-    private static final String TO_STRING_WS_SOAP_MESSAGE_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:int=\"http://hospital.service.com/interface\">\n" +
+    private static final String TO_STRING_METHOD = "InvokeToString";
+    private static final String TO_STREAM_METHOD = "InvokeToStream";
+
+    private static final String WS_SOAP_MESSAGE_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:int=\"http://hospital.service.com/interface\">\n" +
             "   <soapenv:Header/>\n" +
             "   <soapenv:Body>\n" +
-            "      <int:InvokeToString>\n" +
+            "      <int:TO_METHOD>\n" +
             "         <int:Method>REQUEST_METHOD</int:Method>\n" +
             "         <int:DataString><![CDATA[REQUEST_BODY]]></int:DataString>\n" +
-            "      </int:InvokeToString>\n" +
+            "      </int:TO_METHOD>\n" +
             "   </soapenv:Body>\n" +
             "</soapenv:Envelope>";
 
-    private static final String TO_STREAM_WS_SOAP_MESSAGE_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:int=\"http://hospital.service.com/interface\">\n" +
-            "   <soapenv:Header/>\n" +
-            "   <soapenv:Body>\n" +
-            "      <int:InvokeToStream>\n" +
-            "         <int:Method>REQUEST_METHOD</int:Method>\n" +
-            "         <int:DataString><![CDATA[REQUEST_BODY]]></int:DataString>\n" +
-            "      </int:InvokeToStream>\n" +
-            "   </soapenv:Body>\n" +
-            "</soapenv:Envelope>";
-    private static final HttpHeaders DEFAULT_MODIFY_HEADERS = HttpHeaders.readOnlyHttpHeaders(new HttpHeaders(new LinkedMultiValueMap<>(
+    private static final HttpHeaders TO_STRING_HEADERS = HttpHeaders.readOnlyHttpHeaders(new HttpHeaders(new LinkedMultiValueMap<>(
             Map.of("Content-Type", List.of("text/xml;charset=UTF-8"),
                     "SOAPAction", List.of("\"http://hospital.service.com/interface/Huaxi.InvokeMessage.BS.InvokeService.InvokeToString\"")))));
 
+    private static final HttpHeaders TO_STREAM_HEADERS = HttpHeaders.readOnlyHttpHeaders(new HttpHeaders(new LinkedMultiValueMap<>(
+            Map.of("Content-Type", List.of("text/xml;charset=UTF-8"),
+                    "SOAPAction", List.of("\"http://hospital.service.com/interface/Huaxi.InvokeMessage.BS.InvokeService.InvokeToStream\"")))));
+
+    private static final String TO_METHOD = "TO_METHOD";
     private static final String REQUEST_METHOD = "REQUEST_METHOD";
     private static final String REQUEST_BODY = "REQUEST_BODY";
-    private static final String RETURN_START_KEY_1 = "<InvokeToStringResult><![CDATA[";
-    private static final String RETURN_END_KEY_1 = "]]></InvokeToStringResult>";
 
-    private static final String RETURN_START_KEY_2 = "<InvokeToStringResult>";
-    private static final String RETURN_END_KEY_2 = "</InvokeToStringResult>";
+    private static final String CDATA_START = "<![CDATA[";
+    private static final String CDATA_END = "]]>";
+
+    private static final String RETURN_START_KEY_TO_STRING = "<InvokeToStringResult>";
+    private static final String RETURN_END_KEY_TO_STRING = "</InvokeToStringResult>";
+
+    private static final String RETURN_START_KEY_TO_STREAM = "<InvokeToStreamResult>";
+    private static final String RETURN_END_KEY_TO_STREAM = "</InvokeToStreamResult>";
+
     @Autowired
     private HisPortProperties properties;
 
@@ -129,34 +133,48 @@ public abstract class AbstractHxHisPatientPuller {
     }
 
     private String retrievePatientContent(boolean toString, String methodCode, String requestStr) {
-        String requestBody = (toString ? TO_STRING_WS_SOAP_MESSAGE_TEMPLATE : TO_STREAM_WS_SOAP_MESSAGE_TEMPLATE)
+        String requestBody = WS_SOAP_MESSAGE_TEMPLATE.replace(TO_METHOD, toString ? TO_STRING_METHOD : TO_STREAM_METHOD)
                 .replace(REQUEST_METHOD, methodCode).replace(REQUEST_BODY, requestStr);
 
         patientPullRate.acquire();
 
+        log.debug("Do patient pull with request body {}", requestBody);
+
         ResponseEntity<String> responseEntity = patientPullerRestTemplate.exchange(properties.getPull().getEndpoint(), HttpMethod.POST,
-                new HttpEntity<>(requestBody, DEFAULT_MODIFY_HEADERS), new ParameterizedTypeReference<>() {
+                new HttpEntity<>(requestBody, toString ? TO_STRING_HEADERS : TO_STREAM_HEADERS), new ParameterizedTypeReference<>() {
                 });
 
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
             log.warn("Failed request pull his patient with method {} and request string {}", methodCode, requestStr);
             return null;
         }
+
         String rawResponseBody = responseEntity.getBody();
-        log.debug("Retrieve patient response by method code {} and request pull range {}  with raw body {}",
-                methodCode, requestStr, rawResponseBody);
-        if (rawResponseBody == null || (!rawResponseBody.contains(RETURN_START_KEY_1) || !rawResponseBody.contains(RETURN_END_KEY_1))
-                && (!rawResponseBody.contains(RETURN_START_KEY_2) || !rawResponseBody.contains(RETURN_END_KEY_2))) {
-            log.warn("The response {} not contain return {} or {} and {} or {} field", rawResponseBody,
-                    RETURN_START_KEY_1, RETURN_START_KEY_2, RETURN_END_KEY_1, RETURN_END_KEY_2);
+        log.debug("Retrieve patient response by method code {} and request pull range {}  with raw body {}", methodCode, requestStr, rawResponseBody);
+
+        return splitRawResponse(rawResponseBody, toString ? RETURN_START_KEY_TO_STRING : RETURN_START_KEY_TO_STREAM,
+                toString ? RETURN_END_KEY_TO_STRING : RETURN_END_KEY_TO_STREAM);
+    }
+
+    private String splitRawResponse(String rawResponseBody, String startAt, String endAt) {
+        if (!StringUtils.hasText(rawResponseBody)) {
+            log.warn("The response {} is empty", rawResponseBody);
             return null;
         }
-        if (rawResponseBody.contains(RETURN_END_KEY_1)) {
-            return rawResponseBody.substring(rawResponseBody.indexOf(RETURN_START_KEY_1) + RETURN_START_KEY_1.length(),
-                    rawResponseBody.indexOf(RETURN_END_KEY_1));
+        String usingStartAt = startAt + CDATA_START;
+        String usingEndAt = CDATA_END + endAt;
+        if (rawResponseBody.contains(usingStartAt)) {
+            return rawResponseBody.substring(rawResponseBody.indexOf(usingStartAt) + usingStartAt.length(),
+                    rawResponseBody.indexOf(usingEndAt));
         }
-        return rawResponseBody.substring(rawResponseBody.indexOf(RETURN_START_KEY_2) + RETURN_START_KEY_2.length(),
-                rawResponseBody.indexOf(RETURN_END_KEY_2));
+        usingStartAt = startAt;
+        usingEndAt = endAt;
+        if (rawResponseBody.contains(usingStartAt)) {
+            return rawResponseBody.substring(rawResponseBody.indexOf(usingStartAt) + usingStartAt.length(),
+                    rawResponseBody.indexOf(usingEndAt));
+        }
+        log.warn("The response {} not contain return {} and {}", rawResponseBody, startAt, endAt);
+        return null;
     }
 
     @SneakyThrows
@@ -173,7 +191,9 @@ public abstract class AbstractHxHisPatientPuller {
     @Setter
     @ToString
     private static class PullResponse<T> {
-        private static final String NO_DATA_CODE = "-102";
+        private static final String NO_DATA_CODE_1 = "-102";
+        private static final String NO_DATA_CODE_2 = "1";
+        private static final String NO_DATA_CODE_3 = "-1";
         @JsonProperty("resultCode")
         private String code;
 
@@ -184,7 +204,9 @@ public abstract class AbstractHxHisPatientPuller {
 
         @JsonIgnore
         public boolean isSuccess() {
-            return Objects.equals(code, "0") || Objects.equals(code, NO_DATA_CODE) && ObjectUtils.isEmpty(contents);
+            return Objects.equals(code, "0") || ObjectUtils.isEmpty(contents) &&
+                    (Objects.equals(code, NO_DATA_CODE_1) || Objects.equals(code, NO_DATA_CODE_2)
+                            || Objects.equals(code, NO_DATA_CODE_3));
         }
     }
 

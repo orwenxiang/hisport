@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jackson.JacksonProperties;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.lang.Nullable;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -51,6 +52,10 @@ public class ArtemisClient {
     @Autowired
     @Qualifier("artemisDepartCache")
     private RLocalCachedMap<String, ArtemisDepartPO> departCache;
+
+    @Autowired(required = false)
+    @Qualifier("artemisRetryTemplate")
+    private RetryTemplate artemisRetryTemplate;
 
     private HisPortProperties.HikVisionArtemisConfig artemisConfig;
     private ObjectMapper objectMapper;
@@ -100,65 +105,74 @@ public class ArtemisClient {
     }
 
     @SneakyThrows
-    protected void syncDepart(Collection<ArtemisDepartPO> departs) {
-        ArtemisResponse<Void> response = doRequest("/orgSync", departs, new TypeReference<>() {
+    protected synchronized void syncDepart(Collection<ArtemisDepartPO> departs) {
+        doWithRetry(() -> {
+            ArtemisResponse<Void> response = doRequest("/orgSync", departs, new TypeReference<>() {
+            });
+            checkResponse(response, departs, "Failed to sync department");
+            log.debug("Success access artemis to department sync with department is {}", departs.size());
         });
-        checkResponse(response, departs, "Failed to sync department");
-        log.debug("Success access artemis to department sync with department is {}", departs.size());
     }
 
-    @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.STAFF_JOINED_QUEUE))
     public void staffJoin(ArtemisStaffDTO staffDTO) {
-        ArtemisResponse<Void> response = doRequest("/insiderAdd", staffDTO, new TypeReference<>() {
+        doWithRetry(() -> {
+            ArtemisResponse<Void> response = doRequest("/insiderAdd", staffDTO, new TypeReference<>() {
+            });
+            checkResponse(response, staffDTO, "Failed to sync staff join");
+            log.debug("Success access artemis to staff join with body {}", staffDTO);
         });
-        checkResponse(response, staffDTO, "Failed to sync staff join");
-        log.debug("Success access artemis to staff join with body {}", staffDTO);
     }
 
-    @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.STAFF_LEAVED_QUEUE))
     public void staffLeave(ArtemisLeaveDTO leaveHospitalDTO) {
-        ArtemisResponse<Void> response = doRequest("/insiderDel", leaveHospitalDTO, new TypeReference<>() {
+        doWithRetry(() -> {
+            ArtemisResponse<Void> response = doRequest("/insiderDel", leaveHospitalDTO, new TypeReference<>() {
+            });
+            checkResponse(response, leaveHospitalDTO, "Failed to sync staff leave ");
+            log.debug("Success access artemis to staff leave with body {}", leaveHospitalDTO);
         });
-        checkResponse(response, leaveHospitalDTO, "Failed to sync staff leave ");
-        log.debug("Success access artemis to staff leave with body {}", leaveHospitalDTO);
     }
 
-    @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_JOINED_QUEUE))
     public void patientJoin(ArtemisPatientDTO patientDTO) {
-        ArtemisResponse<Void> response = doRequest("/patientAdd", patientDTO, new TypeReference<>() {
+        doWithRetry(() -> {
+            ArtemisResponse<Void> response = doRequest("/patientAdd", patientDTO, new TypeReference<>() {
+            });
+            checkResponse(response, patientDTO, "Failed to sync patient join");
+            log.debug("Success access artemis to patient join with body {}", patientDTO);
         });
-        checkResponse(response, patientDTO, "Failed to sync patient join");
-        log.debug("Success access artemis to patient join with body {}", patientDTO);
     }
 
-    @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_LEAVED_QUEUE))
     public void patientLeave(ArtemisLeaveDTO leaveHospitalDTO) {
-        ArtemisResponse<Void> response = doRequest("/patientDel", leaveHospitalDTO, new TypeReference<>() {
+        doWithRetry(() -> {
+            ArtemisResponse<Void> response = doRequest("/patientDel", leaveHospitalDTO, new TypeReference<>() {
+            });
+            checkResponse(response, leaveHospitalDTO, "Failed to sync patient leave ");
+            log.debug("Success access artemis to patient leave with body {}", leaveHospitalDTO);
         });
-        checkResponse(response, leaveHospitalDTO, "Failed to sync patient leave ");
-        log.debug("Success access artemis to patient leave with body {}", leaveHospitalDTO);
     }
 
-    @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_TRANSFER_QUEUE))
     public void patientTransfer(ArtemisTransferDTO transferDTO) {
-        ArtemisResponse<Void> response = doRequest("/patientTransfer", transferDTO, new TypeReference<>() {
+        doWithRetry(() -> {
+            ArtemisResponse<Void> response = doRequest("/patientTransfer", transferDTO, new TypeReference<>() {
+            });
+            checkResponse(response, transferDTO, "Failed to sync patient transfer");
+            log.debug("Success access artemis to patient transfer with body {}", transferDTO);
         });
-        checkResponse(response, transferDTO, "Failed to sync patient transfer");
-        log.debug("Success access artemis to patient transfer with body {}", transferDTO);
     }
 
     @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.CARE_JOINED_QUEUE))
     public void careJoin(ArtemisCareDTO careDTO) {
-        ArtemisResponse<Void> response = doRequest("/phAdd", careDTO, new TypeReference<>() {
+        doWithRetry(() -> {
+            ArtemisResponse<Void> response = doRequest("/phAdd", careDTO, new TypeReference<>() {
+            });
+            checkResponse(response, careDTO, "Failed to sync care join ");
+            log.debug("Success access artemis to care join with body {}", careDTO);
         });
-        checkResponse(response, careDTO, "Failed to sync care join ");
-        log.debug("Success access artemis to care join with body {}", careDTO);
     }
 
     @SneakyThrows
@@ -179,6 +193,21 @@ public class ArtemisClient {
             return null;
         }
         return objectMapper.readValue(result, typeReference);
+    }
+
+    private void doWithRetry(Runnable runnable) {
+        try {
+            if (artemisRetryTemplate == null) {
+                runnable.run();
+                return;
+            }
+            artemisRetryTemplate.execute(context -> {
+                runnable.run();
+                return null;
+            });
+        } catch (Throwable e) {
+            log.warn("Failed access artemis request", e);
+        }
     }
 
     private Map<String, String> withRequestPath(String prefix) {

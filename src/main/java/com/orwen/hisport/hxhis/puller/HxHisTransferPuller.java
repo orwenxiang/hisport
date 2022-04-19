@@ -7,7 +7,6 @@ import com.orwen.hisport.hxhis.dbaccess.repository.HxHisTransferRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Date;
@@ -15,7 +14,7 @@ import java.util.List;
 
 @Slf4j
 @Order(3)
-@Component
+//@Component
 public class HxHisTransferPuller extends AbstractHxHisPatientPuller {
     private static final QHxHisTransferPO qTransfer = QHxHisTransferPO.hxHisTransferPO;
     @Autowired

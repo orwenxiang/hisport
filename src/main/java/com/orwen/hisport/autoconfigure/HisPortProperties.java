@@ -4,6 +4,7 @@ import com.hikvision.artemis.sdk.config.ArtemisConfig;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
@@ -29,6 +30,7 @@ public class HisPortProperties {
     }
 
 
+    @ToString
     public static class HikVisionArtemisConfig extends ArtemisConfig {
         private String host;
         private String appKey;
@@ -39,6 +41,9 @@ public class HisPortProperties {
         @Getter
         @Setter
         private String hisMsPrefix = "/artemis/api/v1/hisms";
+        @Getter
+        @Setter
+        private RabbitProperties.Retry retry;
 
         @Override
         public String getHost() {

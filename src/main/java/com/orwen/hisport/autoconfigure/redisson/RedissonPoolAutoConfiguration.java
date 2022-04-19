@@ -35,6 +35,7 @@ class RedissonPoolAutoConfiguration implements RedissonAutoConfigurationCustomiz
 
     @Override
     public void customize(Config config) {
+        config.setLockWatchdogTimeout(5 * 1000L);
         if (config.getCodec() == null) {
             config.setCodec(new MarshallingCodec());
         }

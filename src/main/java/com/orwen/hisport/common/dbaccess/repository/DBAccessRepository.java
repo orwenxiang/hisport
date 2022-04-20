@@ -4,6 +4,7 @@ package com.orwen.hisport.common.dbaccess.repository;
 import com.querydsl.core.dml.DeleteClause;
 import com.querydsl.core.dml.UpdateClause;
 import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.PathBuilder;
@@ -26,7 +27,7 @@ public interface DBAccessRepository<T> extends JpaRepository<T, Long>,
         QuerydslPredicateExecutor<T>, JpaSpecificationExecutor<T> {
     JPQLQuery<T> select();
 
-    <U> JPQLQuery<U> select(EntityPath<U> path);
+    <U> JPQLQuery<U> select(Expression<U> path);
 
     UpdateClause<JPAUpdateClause> update();
 

@@ -4,6 +4,7 @@ package com.orwen.hisport.common.dbaccess.repository;
 import com.querydsl.core.dml.DeleteClause;
 import com.querydsl.core.dml.UpdateClause;
 import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.PathBuilder;
@@ -74,8 +75,8 @@ public class DBAccessRepositoryImpl<T> extends QuerydslJpaRepository<T, Long>
     }
 
     @Override
-    public <U> JPQLQuery<U> select(EntityPath<U> path) {
-        return dslSupport.from(path);
+    public <U> JPQLQuery<U> select(Expression<U> expression) {
+        return dslSupport.from(path).select(expression);
     }
 
     @Override

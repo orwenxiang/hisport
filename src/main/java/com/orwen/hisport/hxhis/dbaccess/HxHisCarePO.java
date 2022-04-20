@@ -17,7 +17,7 @@ import java.util.Date;
 @Setter
 @Entity
 @ToString
-@Table(name = "hx_his_cares", indexes = {@Index(columnList = "cert_num,latest_pull_at", unique = true)})
+@Table(name = "hx_his_cares", indexes = {@Index(columnList = "cert_num", unique = true)})
 public class HxHisCarePO extends AbstractPersistable {
 
     @JsonProperty("relatedPersonId")
@@ -49,6 +49,11 @@ public class HxHisCarePO extends AbstractPersistable {
     @JsonProperty("mpNat")
     @Column(name = "mp_nat")
     private Boolean mpNat;
+
+    @JsonIgnore
+    @JsonProperty("available")
+    @Column(name = "available", length = 20)
+    private Boolean available;
 
     @JsonIgnore
     @Column(name = "latest_pull_at")

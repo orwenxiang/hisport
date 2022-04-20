@@ -9,16 +9,19 @@ import com.orwen.hisport.artemis.dbaccess.repository.ArtemisDepartRepository;
 import com.orwen.hisport.artemis.model.*;
 import com.orwen.hisport.autoconfigure.HisPortProperties;
 import com.orwen.hisport.defs.HxPortDefs;
+import com.rabbitmq.client.Channel;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLocalCachedMap;
 import org.springframework.amqp.rabbit.annotation.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jackson.JacksonProperties;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.lang.Nullable;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,8 +89,9 @@ public class ArtemisClient {
         }
     }
 
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.DEPART_CHANGED_QUEUE))
-    public void departChanged(ArtemisDepartPO artemisDepart) {
+    @SneakyThrows
+    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.DEPART_CHANGED_QUEUE), concurrency = "1", ackMode = "MANUAL")
+    public void departChanged(ArtemisDepartPO artemisDepart, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
         if (!Objects.equals(departCache.put(artemisDepart.getDepartId(), artemisDepart), artemisDepart)) {
             ArtemisDepartPO departPO = departs.findOne(qArtemisDepart.departId.eq(artemisDepart.getDepartId()))
                     .orElseGet(() -> {
@@ -102,6 +106,7 @@ public class ArtemisClient {
             syncDepart(departCache.values().stream().
                     filter(ArtemisDepartPO::getEnabled).collect(Collectors.toList()));
         }
+        channel.basicAck(tag, false);
     }
 
     @SneakyThrows
@@ -114,65 +119,76 @@ public class ArtemisClient {
         });
     }
 
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.STAFF_JOINED_QUEUE))
-    public void staffJoin(ArtemisStaffDTO staffDTO) {
+    @SneakyThrows
+    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.STAFF_JOINED_QUEUE), concurrency = "1", ackMode = "MANUAL")
+    public void staffJoin(ArtemisStaffDTO staffDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/insiderAdd", staffDTO, new TypeReference<>() {
             });
             checkResponse(response, staffDTO, "Failed to sync staff join");
             log.debug("Success access artemis to staff join with body {}", staffDTO);
         });
+        channel.basicAck(tag, false);
     }
 
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.STAFF_LEAVED_QUEUE))
-    public void staffLeave(ArtemisLeaveDTO leaveHospitalDTO) {
+    @SneakyThrows
+    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.STAFF_LEAVED_QUEUE), concurrency = "1", ackMode = "MANUAL")
+    public void staffLeave(ArtemisLeaveDTO leaveHospitalDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/insiderDel", leaveHospitalDTO, new TypeReference<>() {
             });
             checkResponse(response, leaveHospitalDTO, "Failed to sync staff leave ");
             log.debug("Success access artemis to staff leave with body {}", leaveHospitalDTO);
         });
+        channel.basicAck(tag, false);
     }
 
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_JOINED_QUEUE))
-    public void patientJoin(ArtemisPatientDTO patientDTO) {
+    @SneakyThrows
+    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_JOINED_QUEUE), concurrency = "1", ackMode = "MANUAL")
+    public void patientJoin(ArtemisPatientDTO patientDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/patientAdd", patientDTO, new TypeReference<>() {
             });
             checkResponse(response, patientDTO, "Failed to sync patient join");
             log.debug("Success access artemis to patient join with body {}", patientDTO);
         });
+        channel.basicAck(tag, false);
     }
 
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_LEAVED_QUEUE))
-    public void patientLeave(ArtemisLeaveDTO leaveHospitalDTO) {
+    @SneakyThrows
+    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_LEAVED_QUEUE), concurrency = "1", ackMode = "MANUAL")
+    public void patientLeave(ArtemisLeaveDTO leaveHospitalDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/patientDel", leaveHospitalDTO, new TypeReference<>() {
             });
             checkResponse(response, leaveHospitalDTO, "Failed to sync patient leave ");
             log.debug("Success access artemis to patient leave with body {}", leaveHospitalDTO);
         });
+        channel.basicAck(tag, false);
     }
 
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_TRANSFER_QUEUE))
-    public void patientTransfer(ArtemisTransferDTO transferDTO) {
+    @SneakyThrows
+    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_TRANSFER_QUEUE), concurrency = "1", ackMode = "MANUAL")
+    public void patientTransfer(ArtemisTransferDTO transferDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/patientTransfer", transferDTO, new TypeReference<>() {
             });
             checkResponse(response, transferDTO, "Failed to sync patient transfer");
             log.debug("Success access artemis to patient transfer with body {}", transferDTO);
         });
+        channel.basicAck(tag, false);
     }
 
     @SneakyThrows
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.CARE_JOINED_QUEUE))
-    public void careJoin(ArtemisCareDTO careDTO) {
+    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.CARE_JOINED_QUEUE), concurrency = "1", ackMode = "MANUAL")
+    public void careJoin(ArtemisCareDTO careDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/phAdd", careDTO, new TypeReference<>() {
             });
             checkResponse(response, careDTO, "Failed to sync care join ");
             log.debug("Success access artemis to care join with body {}", careDTO);
         });
+        channel.basicAck(tag, false);
     }
 
     @SneakyThrows

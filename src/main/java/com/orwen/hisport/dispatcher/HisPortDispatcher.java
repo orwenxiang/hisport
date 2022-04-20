@@ -79,7 +79,8 @@ public class HisPortDispatcher {
 
     public void patientCare(HxHisCarePO carePO) {
         ArtemisCareDTO artemisCareDTO = new ArtemisCareDTO();
-        BeanUtils.copyProperties(carePO, artemisCareDTO, "latestPullAt");
+        BeanUtils.copyProperties(carePO, artemisCareDTO, "id", "latestPullAt", "mpNat");
+        artemisCareDTO.setMpNat(Boolean.parseBoolean(carePO.getMpNat()));
         rabbitOperation.convertAndSend(HxPortDefs.CARE_JOINED_QUEUE, artemisCareDTO);
     }
 }

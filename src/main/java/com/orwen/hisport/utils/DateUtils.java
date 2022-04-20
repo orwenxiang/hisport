@@ -16,22 +16,30 @@ public class DateUtils {
     public static Date parseStartAt(String date) {
         Calendar startAt = Calendar.getInstance();
         startAt.setTime(DATE_FORMAT_THREAD_LOCAL.get().parse(date));
-        startAt.set(Calendar.HOUR_OF_DAY, startAt.getMinimum(Calendar.HOUR_OF_DAY));
-        startAt.set(Calendar.MINUTE, startAt.getMinimum(Calendar.MINUTE));
-        startAt.set(Calendar.SECOND, startAt.getMinimum(Calendar.SECOND));
-        startAt.set(Calendar.MILLISECOND, 1);
-        return startAt.getTime();
+        return startOf(startAt);
     }
 
     @SneakyThrows
     public static Date parseEndAt(String date) {
-        Calendar startAt = Calendar.getInstance();
-        startAt.setTime(DATE_FORMAT_THREAD_LOCAL.get().parse(date));
-        startAt.set(Calendar.HOUR_OF_DAY, startAt.getMaximum(Calendar.HOUR_OF_DAY));
-        startAt.set(Calendar.MINUTE, startAt.getMaximum(Calendar.MINUTE));
-        startAt.set(Calendar.SECOND, startAt.getMaximum(Calendar.SECOND));
-        startAt.set(Calendar.MILLISECOND, startAt.getMaximum(Calendar.MILLISECOND));
-        return startAt.getTime();
+        Calendar endAt = Calendar.getInstance();
+        endAt.setTime(DATE_FORMAT_THREAD_LOCAL.get().parse(date));
+        return endOf(endAt);
+    }
+
+    public static Date startOf(Calendar calendar) {
+        calendar.set(Calendar.HOUR_OF_DAY, calendar.getMinimum(Calendar.HOUR_OF_DAY));
+        calendar.set(Calendar.MINUTE, calendar.getMinimum(Calendar.MINUTE));
+        calendar.set(Calendar.SECOND, calendar.getMinimum(Calendar.SECOND));
+        calendar.set(Calendar.MILLISECOND, 1);
+        return calendar.getTime();
+    }
+
+    public static Date endOf(Calendar calendar) {
+        calendar.set(Calendar.HOUR_OF_DAY, calendar.getMaximum(Calendar.HOUR_OF_DAY));
+        calendar.set(Calendar.MINUTE, calendar.getMaximum(Calendar.MINUTE));
+        calendar.set(Calendar.SECOND, calendar.getMaximum(Calendar.SECOND));
+        calendar.set(Calendar.MILLISECOND, calendar.getMaximum(Calendar.MILLISECOND));
+        return calendar.getTime();
     }
 
     public static boolean isBetween(@Nullable Date from, @Nullable Date to, Date check) {

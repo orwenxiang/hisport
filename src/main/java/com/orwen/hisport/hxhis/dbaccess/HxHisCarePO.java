@@ -2,10 +2,11 @@ package com.orwen.hisport.hxhis.dbaccess;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.orwen.hisport.common.dbaccess.AbstractPersistable;
 import com.orwen.hisport.common.enums.HisPortGender;
-import com.orwen.hisport.utils.EnumIntTyped;
+import com.orwen.hisport.utils.EnumStrTyped;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -17,7 +18,7 @@ import java.util.Date;
 @Setter
 @Entity
 @ToString
-@Table(name = "hx_his_cares", indexes = {@Index(columnList = "cert_num", unique = true)})
+@Table(name = "hx_his_cares", indexes = {@Index(columnList = "cert_card", unique = true)})
 public class HxHisCarePO extends AbstractPersistable {
 
     @JsonProperty("relatedPersonId")
@@ -25,13 +26,14 @@ public class HxHisCarePO extends AbstractPersistable {
     private String patientId;
 
     @JsonProperty("certCard")
-    @Column(name = "cert_num", length = 20)
-    private String certNum;
+    @Column(name = "cert_card", length = 20)
+    private String certCard;
 
     @JsonProperty("gender")
     @Enumerated(EnumType.STRING)
     @Column(name = "gender", length = 32)
-    @JsonSerialize(using = EnumIntTyped.Serializer.class)
+    @JsonSerialize(using = EnumStrTyped.Serializer.class)
+    @JsonDeserialize(using = HisPortGender.Deserializer.class)
     private HisPortGender gender;
 
     @JsonProperty("name")
@@ -48,7 +50,7 @@ public class HxHisCarePO extends AbstractPersistable {
 
     @JsonProperty("mpNat")
     @Column(name = "mp_nat")
-    private Boolean mpNat;
+    private String mpNat;
 
     @JsonIgnore
     @JsonProperty("available")

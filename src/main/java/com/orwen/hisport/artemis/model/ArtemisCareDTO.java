@@ -1,9 +1,10 @@
 package com.orwen.hisport.artemis.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.orwen.hisport.common.enums.HisPortGender;
-import com.orwen.hisport.utils.EnumIntTyped;
+import com.orwen.hisport.utils.EnumStrTyped;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -19,9 +20,10 @@ public class ArtemisCareDTO implements Serializable {
     @JsonProperty("relatedPersonId")
     private String patientId;
 
-    private String certNum;
+    private String certCard;
 
-    @JsonSerialize(using = EnumIntTyped.Serializer.class)
+    @JsonSerialize(using = EnumStrTyped.Serializer.class)
+    @JsonDeserialize(using = HisPortGender.Deserializer.class)
     private HisPortGender gender;
 
     private String name;

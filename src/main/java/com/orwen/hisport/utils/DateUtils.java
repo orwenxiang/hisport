@@ -43,8 +43,15 @@ public class DateUtils {
     }
 
     public static boolean isBetween(@Nullable Date from, @Nullable Date to, Date check) {
-        return isBetween(from == null ? Long.MIN_VALUE : from.getTime(),
-                to == null ? Long.MAX_VALUE : to.getTime(), check.getTime());
+        long usingFromTime = Long.MIN_VALUE;
+        if (from != null && from.getTime() > 0) {
+            usingFromTime = from.getTime();
+        }
+        long usingToTime = Long.MAX_VALUE;
+        if (to != null && to.getTime() > 0) {
+            usingToTime = to.getTime();
+        }
+        return isBetween(usingFromTime, usingToTime, check.getTime());
     }
 
     private static boolean isBetween(long from, long to, long check) {

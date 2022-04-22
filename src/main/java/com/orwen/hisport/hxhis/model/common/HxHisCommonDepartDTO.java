@@ -19,10 +19,7 @@ public abstract class HxHisCommonDepartDTO implements Serializable {
     private static final String ENABLE_CODE = "1";
     @JacksonXmlProperty(localName = "CTD_Code")
     private String id;
-
-    @JacksonXmlProperty(localName = "CTD_Alias")
-    private String name;
-
+    
     @JacksonXmlProperty(localName = "CTD_Status")
     private String status;
 
@@ -37,6 +34,10 @@ public abstract class HxHisCommonDepartDTO implements Serializable {
         return Objects.equals(status, ENABLE_CODE) &&
                 DateUtils.isBetween(validStart, validEnd, new Date());
     }
+
+    public abstract void setName(String name);
+
+    public abstract String getName();
 
     public abstract void setParent(String parent);
 

@@ -10,6 +10,9 @@ import lombok.ToString;
 @Setter
 @ToString
 public class HxHisNormalDepartDTO extends HxHisCommonDepartDTO {
+    @JacksonXmlProperty(localName = "CTD_Alias")
+    private String name;
+
     @JacksonXmlProperty(localName = "CTD_ParentCode")
     private String parent;
 }

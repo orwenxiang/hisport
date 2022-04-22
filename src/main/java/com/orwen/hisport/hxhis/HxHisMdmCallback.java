@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.orwen.hisport.dispatcher.HisPortDispatcher;
 import com.orwen.hisport.hxhis.dbaccess.HxHisRecordPO;
-import com.orwen.hisport.hxhis.dbaccess.QHxHisSexPO;
 import com.orwen.hisport.hxhis.model.common.HxHisHeader;
 import com.orwen.hisport.hxhis.model.request.HxHisRequest;
 import com.orwen.hisport.hxhis.model.request.misc.HxHisLevel7DepartWrapper;
@@ -35,7 +34,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/hxhis/mdm/notify")
 public class HxHisMdmCallback {
-    private static final QHxHisSexPO qSex = QHxHisSexPO.hxHisSexPO;
     private static final ThreadLocal<HxHisHeader> HEADER_HOLDER = ThreadLocal.withInitial(() -> null);
     @Autowired
     private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;

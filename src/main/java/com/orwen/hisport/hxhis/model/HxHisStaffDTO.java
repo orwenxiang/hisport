@@ -26,7 +26,7 @@ public class HxHisStaffDTO implements Serializable {
     private String name;
     @JacksonXmlProperty(localName = "CTCP_IDCardNO")
     private String certNum;
-    @JacksonXmlProperty(localName = "CTCP_DeptHierarchyCode")
+    @JacksonXmlProperty(localName = "CTCP_WorkOrgCode")
     private String departId;
 
     @JacksonXmlProperty(localName = "CTCP_PositionStatus")

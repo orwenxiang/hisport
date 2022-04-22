@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.orwen.hisport.dispatcher.HisPortDispatcher;
 import com.orwen.hisport.hxhis.dbaccess.HxHisRecordPO;
+import com.orwen.hisport.hxhis.model.HxHisLevel7DepartDTO;
+import com.orwen.hisport.hxhis.model.HxHisNormalDepartDTO;
+import com.orwen.hisport.hxhis.model.common.HxHisCommonDepartDTO;
 import com.orwen.hisport.hxhis.model.common.HxHisHeader;
 import com.orwen.hisport.hxhis.model.request.HxHisRequest;
 import com.orwen.hisport.hxhis.model.request.misc.HxHisLevel7DepartWrapper;
@@ -27,8 +30,11 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 @Slf4j
 @RestController
@@ -125,7 +131,50 @@ public class HxHisMdmCallback {
             log.warn("The depart level 7 notifies content is empty for raw content {}", content);
             return;
         }
-        hisLevel7DepartWrapper.getBody().getContents().forEach(dispatcher::departChanged);
+        hisLevel7DepartWrapper.getBody().getContents().stream()
+                .flatMap(this::convertDepart).forEach(dispatcher::departChanged);
+    }
+
+    private Stream<HxHisNormalDepartDTO> convertDepart(HxHisLevel7DepartDTO departDTO) {
+        List<HxHisNormalDepartDTO> departs = new ArrayList<>();
+
+        HxHisNormalDepartDTO currentDepart = new HxHisNormalDepartDTO();
+        currentDepart.setId(departDTO.getFourCode());
+        currentDepart.setName(departDTO.getFourName());
+        currentDepart.setParent(null);
+        currentDepart.setStatus(HxHisCommonDepartDTO.ENABLE_CODE);
+
+        departs.add(currentDepart);
+
+        currentDepart = new HxHisNormalDepartDTO();
+        currentDepart.setId(departDTO.getFiveCode());
+        currentDepart.setName(departDTO.getFiveName());
+        currentDepart.setParent(departDTO.getFourCode());
+        currentDepart.setStatus(HxHisCommonDepartDTO.ENABLE_CODE);
+
+        departs.add(currentDepart);
+
+        currentDepart = new HxHisNormalDepartDTO();
+        currentDepart.setId(departDTO.getParent());
+        currentDepart.setName(departDTO.getParentName());
+        currentDepart.setParent(departDTO.getFiveCode());
+        currentDepart.setStatus(HxHisCommonDepartDTO.ENABLE_CODE);
+
+        departs.add(currentDepart);
+
+
+        currentDepart = new HxHisNormalDepartDTO();
+        currentDepart.setId(departDTO.getId());
+        currentDepart.setName(departDTO.getName());
+        currentDepart.setParent(departDTO.getParent());
+        currentDepart.setStatus(HxHisCommonDepartDTO.ENABLE_CODE);
+
+        currentDepart.setValidStart(departDTO.getValidStart());
+        currentDepart.setValidEnd(departDTO.getValidEnd());
+
+        departs.add(currentDepart);
+
+        return departs.stream();
     }
 
     @SneakyThrows

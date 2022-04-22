@@ -3,13 +3,13 @@ package com.orwen.hisport.dispatcher;
 import com.orwen.hisport.artemis.dbaccess.ArtemisDepartPO;
 import com.orwen.hisport.artemis.enums.ArtemisRole;
 import com.orwen.hisport.artemis.model.*;
+import com.orwen.hisport.autoconfigure.HisPortProperties;
 import com.orwen.hisport.common.enums.HisPortGender;
 import com.orwen.hisport.defs.HxPortDefs;
 import com.orwen.hisport.hxhis.dbaccess.HxHisCarePO;
 import com.orwen.hisport.hxhis.dbaccess.HxHisLeavePO;
 import com.orwen.hisport.hxhis.dbaccess.HxHisPatientPO;
 import com.orwen.hisport.hxhis.dbaccess.HxHisTransferPO;
-import com.orwen.hisport.hxhis.dbaccess.repository.HxHisSexRepository;
 import com.orwen.hisport.hxhis.model.HxHisStaffDTO;
 import com.orwen.hisport.hxhis.model.common.HxHisCommonDepartDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ public class HisPortDispatcher {
     private RabbitOperations rabbitOperation;
 
     @Autowired
-    private HxHisSexRepository hisSexes;
+    private HisPortProperties properties;
 
     public void departChanged(HxHisCommonDepartDTO departDTO) {
         ArtemisDepartPO departPO = new ArtemisDepartPO();
@@ -40,7 +40,7 @@ public class HisPortDispatcher {
     }
 
     public void staffChanged(HxHisStaffDTO staffDTO) {
-        if (staffDTO.isEnable()) {
+        if (staffDTO.isEnabled(properties.getOnJobCode())) {
             ArtemisStaffDTO artemisStaffDTO = new ArtemisStaffDTO();
             artemisStaffDTO.setId(staffDTO.getId());
             artemisStaffDTO.setName(staffDTO.getName());
@@ -48,7 +48,7 @@ public class HisPortDispatcher {
             artemisStaffDTO.setDepartId(staffDTO.getDepartId());
             artemisStaffDTO.setGender(HisPortGender.ofHxHisCode(staffDTO.getSexCode()));
             artemisStaffDTO.setPhone(staffDTO.getPhone());
-            artemisStaffDTO.setRole(ArtemisRole.OTHER);//TODO
+            artemisStaffDTO.setRole(ArtemisRole.ofHxHisCode(staffDTO.getRoleCode()));
             rabbitOperation.convertAndSend(HxPortDefs.STAFF_JOINED_QUEUE, artemisStaffDTO);
         } else {
             ArtemisLeaveDTO leaveDTO = new ArtemisLeaveDTO();

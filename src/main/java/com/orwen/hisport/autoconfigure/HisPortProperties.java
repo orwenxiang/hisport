@@ -14,6 +14,7 @@ import java.time.Duration;
 @ToString
 @ConfigurationProperties(prefix = "hisport")
 public class HisPortProperties {
+    private String onJobCode = "001001001001001";
     private HikVisionArtemisConfig artemis = new HikVisionArtemisConfig();
     private HxHisPatientPullConfig pull = new HxHisPatientPullConfig();
 

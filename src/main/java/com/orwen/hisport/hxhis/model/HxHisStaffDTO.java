@@ -20,7 +20,6 @@ import java.util.Objects;
 @ToString
 public class HxHisStaffDTO implements Serializable {
     private static final long serialVersionUID = 1L;
-    private static final String ENABLE_CODE = "1";
     @JacksonXmlProperty(localName = "CTCP_Code")
     private String id;
     @JacksonXmlProperty(localName = "CTCP_Name")
@@ -30,7 +29,7 @@ public class HxHisStaffDTO implements Serializable {
     @JacksonXmlProperty(localName = "CTCP_DeptHierarchyCode")
     private String departId;
 
-    @JacksonXmlProperty(localName = "CTCP_Status")
+    @JacksonXmlProperty(localName = "CTCP_PositionStatus")
     private String status;
 
     @JacksonXmlProperty(localName = "CTCP_CareProvTypeCode")
@@ -53,8 +52,8 @@ public class HxHisStaffDTO implements Serializable {
     private LocalTime updateTime;
 
     @JsonIgnore
-    public boolean isEnable() {
-        return Objects.equals(status, ENABLE_CODE) &&
+    public boolean isEnabled(String statusCode) {
+        return Objects.equals(status, statusCode) &&
                 DateUtils.isBetween(validStart, validEnd, new Date());
     }
 

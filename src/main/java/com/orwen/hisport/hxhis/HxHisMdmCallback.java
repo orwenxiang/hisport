@@ -4,14 +4,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.orwen.hisport.dispatcher.HisPortDispatcher;
 import com.orwen.hisport.hxhis.dbaccess.HxHisRecordPO;
-import com.orwen.hisport.hxhis.dbaccess.HxHisSexPO;
 import com.orwen.hisport.hxhis.dbaccess.QHxHisSexPO;
-import com.orwen.hisport.hxhis.dbaccess.repository.HxHisSexRepository;
 import com.orwen.hisport.hxhis.model.common.HxHisHeader;
 import com.orwen.hisport.hxhis.model.request.HxHisRequest;
 import com.orwen.hisport.hxhis.model.request.misc.HxHisLevel7DepartWrapper;
 import com.orwen.hisport.hxhis.model.request.misc.HxHisNormalDepartWrapper;
-import com.orwen.hisport.hxhis.model.request.misc.HxHisSexWrapper;
 import com.orwen.hisport.hxhis.model.request.misc.HxHisStaffWrapper;
 import com.orwen.hisport.hxhis.model.response.HxHisResponse;
 import lombok.SneakyThrows;
@@ -42,8 +39,6 @@ public class HxHisMdmCallback {
     private static final ThreadLocal<HxHisHeader> HEADER_HOLDER = ThreadLocal.withInitial(() -> null);
     @Autowired
     private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
-    @Autowired
-    private HxHisSexRepository hxHisSexes;
     @Autowired
     private HxHisRecordService recordService;
     @Autowired
@@ -100,7 +95,6 @@ public class HxHisMdmCallback {
         hisRecordPO.setPullAt(new Date());
         hisRecordPO.setDispatched(true);
         switch (notifyType) {
-            case HxHisSexWrapper.TYPE -> processSexNotifies(content);
             case HxHisStaffWrapper.TYPE -> processStaffNotifies(content);
             case HxHisLevel7DepartWrapper.TYPE -> processLevel7DepartNotifies(content);
             case HxHisNormalDepartWrapper.TYPE -> processNormalDepartNotifies(content);
@@ -145,26 +139,6 @@ public class HxHisMdmCallback {
             return;
         }
         hisStaffWrapper.getBody().getContents().forEach(dispatcher::staffChanged);
-    }
-
-    @SneakyThrows
-    protected void processSexNotifies(String content) {
-        HxHisRequest<HxHisSexWrapper> hisSexWrapper = objectMapper.readValue(content, new TypeReference<>() {
-        });
-        if (CollectionUtils.isEmpty(hisSexWrapper.getBody().getContents())) {
-            log.warn("The sex notifies content is empty for raw content {}", content);
-            return;
-        }
-        hisSexWrapper.getBody().getContents().forEach(hisSexDTO -> {
-            HxHisSexPO hisSex = hxHisSexes.findOne(qSex.code.eq(hisSexDTO.getCode()))
-                    .orElseGet(() -> {
-                        HxHisSexPO hxHisSexPO = new HxHisSexPO();
-                        hxHisSexPO.setCode(hisSexDTO.getCode());
-                        return hxHisSexPO;
-                    });
-            hisSex.setName(hisSexDTO.getName());
-            hxHisSexes.save(hisSex);
-        });
     }
 
     protected String guessNotifyType(Map notifyBody) {

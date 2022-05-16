@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 
 @EnableAsync
 @Configuration
@@ -44,7 +45,10 @@ public class HisPortAutoConfiguration {
 
     @Bean(destroyMethod = "shutdown", name = "patientPullExecutor")
     public ExecutorService patientPullExecutor() {
-        return new ForkJoinPool(Runtime.getRuntime().availableProcessors());
+        return new ForkJoinPool(Runtime.getRuntime().availableProcessors() * 2,
+                ForkJoinPool.defaultForkJoinWorkerThreadFactory, null, false,
+                Math.min(Runtime.getRuntime().availableProcessors(), 2),
+                Runtime.getRuntime().availableProcessors() * 4, 1, null, 60_000L, TimeUnit.MILLISECONDS);
     }
 
     @Bean(name = "patientPullWeights")

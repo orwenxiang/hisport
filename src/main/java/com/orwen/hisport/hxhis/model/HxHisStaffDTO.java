@@ -59,6 +59,9 @@ public class HxHisStaffDTO implements Serializable {
 
     @JsonIgnore
     public LocalDateTime updateAt() {
+        if (updateTime == null) {
+            return null;
+        }
         return updateTime.atDate(updateDate);
     }
 }

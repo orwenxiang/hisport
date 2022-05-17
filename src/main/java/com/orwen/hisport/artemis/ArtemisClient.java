@@ -122,73 +122,97 @@ public class ArtemisClient {
     @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.STAFF_JOINED_QUEUE), concurrency = "1", ackMode = "MANUAL")
     public void staffJoin(ArtemisStaffDTO staffDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
+        staffJoin(staffDTO);
+        channel.basicAck(tag, false);
+    }
+
+    public void staffJoin(ArtemisStaffDTO staffDTO) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/insiderAdd", staffDTO, new TypeReference<>() {
             });
             checkResponse(response, staffDTO, "Failed to sync staff join");
             log.debug("Success access artemis to staff join with body {}", staffDTO);
         });
-        channel.basicAck(tag, false);
     }
 
     @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.STAFF_LEAVED_QUEUE), concurrency = "1", ackMode = "MANUAL")
     public void staffLeave(ArtemisLeaveDTO leaveHospitalDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
+        staffLeave(leaveHospitalDTO);
+        channel.basicAck(tag, false);
+    }
+
+    public void staffLeave(ArtemisLeaveDTO leaveHospitalDTO) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/insiderDel", leaveHospitalDTO, new TypeReference<>() {
             });
             checkResponse(response, leaveHospitalDTO, "Failed to sync staff leave ");
             log.debug("Success access artemis to staff leave with body {}", leaveHospitalDTO);
         });
-        channel.basicAck(tag, false);
     }
 
     @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_JOINED_QUEUE), concurrency = "1", ackMode = "MANUAL")
     public void patientJoin(ArtemisPatientDTO patientDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
+        patientJoin(patientDTO);
+        channel.basicAck(tag, false);
+    }
+
+    public void patientJoin(ArtemisPatientDTO patientDTO) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/patientAdd", patientDTO, new TypeReference<>() {
             });
             checkResponse(response, patientDTO, "Failed to sync patient join");
             log.debug("Success access artemis to patient join with body {}", patientDTO);
         });
-        channel.basicAck(tag, false);
     }
 
     @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_LEAVED_QUEUE), concurrency = "1", ackMode = "MANUAL")
     public void patientLeave(ArtemisLeaveDTO leaveHospitalDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
+        patientLeave(leaveHospitalDTO);
+        channel.basicAck(tag, false);
+    }
+
+    public void patientLeave(ArtemisLeaveDTO leaveHospitalDTO) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/patientDel", leaveHospitalDTO, new TypeReference<>() {
             });
             checkResponse(response, leaveHospitalDTO, "Failed to sync patient leave ");
             log.debug("Success access artemis to patient leave with body {}", leaveHospitalDTO);
         });
-        channel.basicAck(tag, false);
     }
 
     @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_TRANSFER_QUEUE), concurrency = "1", ackMode = "MANUAL")
     public void patientTransfer(ArtemisTransferDTO transferDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
+        patientTransfer(transferDTO);
+        channel.basicAck(tag, false);
+    }
+
+    public void patientTransfer(ArtemisTransferDTO transferDTO) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/patientTransfer", transferDTO, new TypeReference<>() {
             });
             checkResponse(response, transferDTO, "Failed to sync patient transfer");
             log.debug("Success access artemis to patient transfer with body {}", transferDTO);
         });
-        channel.basicAck(tag, false);
     }
 
     @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.CARE_JOINED_QUEUE), concurrency = "1", ackMode = "MANUAL")
     public void careJoin(ArtemisCareDTO careDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
+        careJoin(careDTO);
+        channel.basicAck(tag, false);
+    }
+
+    public void careJoin(ArtemisCareDTO careDTO) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/phAdd", careDTO, new TypeReference<>() {
             });
             checkResponse(response, careDTO, "Failed to sync care join ");
             log.debug("Success access artemis to care join with body {}", careDTO);
         });
-        channel.basicAck(tag, false);
     }
 
     @SneakyThrows

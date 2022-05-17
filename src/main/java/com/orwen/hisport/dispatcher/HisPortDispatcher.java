@@ -1,5 +1,6 @@
 package com.orwen.hisport.dispatcher;
 
+import com.orwen.hisport.artemis.ArtemisClient;
 import com.orwen.hisport.artemis.dbaccess.ArtemisDepartPO;
 import com.orwen.hisport.artemis.enums.ArtemisRole;
 import com.orwen.hisport.artemis.model.*;
@@ -26,6 +27,8 @@ import java.util.Date;
 public class HisPortDispatcher {
     @Autowired
     private RabbitOperations rabbitOperation;
+    @Autowired
+    private ArtemisClient artemisClient;
 
     @Autowired
     private HisPortProperties properties;
@@ -62,25 +65,29 @@ public class HisPortDispatcher {
         ArtemisPatientDTO artemisPatientDTO = new ArtemisPatientDTO();
         BeanUtils.copyProperties(patientPO, artemisPatientDTO, "id");
         artemisPatientDTO.setId(patientPO.getPersonId());
-        rabbitOperation.convertAndSend(HxPortDefs.PATIENT_JOINED_QUEUE, artemisPatientDTO);
+//        rabbitOperation.convertAndSend(HxPortDefs.PATIENT_JOINED_QUEUE, artemisPatientDTO);
+        artemisClient.patientJoin(artemisPatientDTO);
     }
 
     public void patientLeave(HxHisLeavePO leavePO) {
         ArtemisLeaveDTO artemisLeaveDTO = new ArtemisLeaveDTO();
         BeanUtils.copyProperties(leavePO, artemisLeaveDTO);
-        rabbitOperation.convertAndSend(HxPortDefs.PATIENT_LEAVED_QUEUE, artemisLeaveDTO);
+//        rabbitOperation.convertAndSend(HxPortDefs.PATIENT_LEAVED_QUEUE, artemisLeaveDTO);
+        artemisClient.patientLeave(artemisLeaveDTO);
     }
 
     public void patientTransfer(HxHisTransferPO transferPO) {
         ArtemisTransferDTO transferDTO = new ArtemisTransferDTO();
         BeanUtils.copyProperties(transferPO, transferDTO, "latestPullAt");
-        rabbitOperation.convertAndSend(HxPortDefs.PATIENT_TRANSFER_QUEUE, transferDTO);
+//        rabbitOperation.convertAndSend(HxPortDefs.PATIENT_TRANSFER_QUEUE, transferDTO);
+        artemisClient.patientTransfer(transferDTO);
     }
 
     public void patientCare(HxHisCarePO carePO) {
         ArtemisCareDTO artemisCareDTO = new ArtemisCareDTO();
         BeanUtils.copyProperties(carePO, artemisCareDTO, "id", "latestPullAt", "mpNat");
         artemisCareDTO.setMpNat(Boolean.parseBoolean(carePO.getMpNat()));
-        rabbitOperation.convertAndSend(HxPortDefs.CARE_JOINED_QUEUE, artemisCareDTO);
+//        rabbitOperation.convertAndSend(HxPortDefs.CARE_JOINED_QUEUE, artemisCareDTO);
+        artemisClient.careJoin(artemisCareDTO);
     }
 }

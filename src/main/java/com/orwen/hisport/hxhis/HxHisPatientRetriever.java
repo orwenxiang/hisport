@@ -6,6 +6,7 @@ import com.orwen.hisport.common.dbaccess.QKeyValuePO;
 import com.orwen.hisport.common.dbaccess.repository.KeyValueRepository;
 import com.orwen.hisport.common.enums.HisPortKey;
 import com.orwen.hisport.hxhis.puller.AbstractHxHisPatientPuller;
+import com.orwen.hisport.hxhis.puller.HxHisCarePuller;
 import com.orwen.hisport.utils.DateUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +57,9 @@ public class HxHisPatientRetriever implements MessageListener<String> {
 
     @Autowired
     private ObjectProvider<AbstractHxHisPatientPuller> hxHisPatientPullers;
+
+    @Autowired
+    private HxHisCarePuller carePuller;
 
     @Autowired
     @Qualifier("patientPullWeights")
@@ -135,7 +139,11 @@ public class HxHisPatientRetriever implements MessageListener<String> {
             } else {
                 log.debug("Do patient pull with ranges {}", pullRanges);
             }
-            hxHisPatientPullers.orderedStream().forEach(patientPuller -> doPullerWithRanges(patientPuller, pullRanges));
+            hxHisPatientPullers.orderedStream().filter(item -> !(item instanceof HxHisCarePuller))
+                    .forEach(patientPuller -> doPullerWithRanges(patientPuller, pullRanges));
+
+            carePuller.pull(HxHisCarePuller.currentPullRange());
+
             Date latestPullDate = pullRanges.get(pullRanges.size() - 1).getEndDate();
             KeyValuePO keyValue = keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT))
                     .orElseGet(() -> {

@@ -24,11 +24,6 @@ public class HxHisCarePuller extends AbstractHxHisPatientPuller {
     private HxHisCareRepository cares;
 
     @Override
-    public void pull(PullRange pullRange) {
-        super.pull(currentPullRange());
-    }
-
-    @Override
     protected synchronized void doPull(PullRange pullRange) {
         List<HxHisCarePO> hisCares = retrievePatientContent(false, "ZJ-GETPATESCORTINFO", pullRange, new TypeReference<>() {
         });
@@ -66,7 +61,7 @@ public class HxHisCarePuller extends AbstractHxHisPatientPuller {
                         .where(qCare.certCard.eq(certNum)).execute());
     }
 
-    protected PullRange currentPullRange() {
+    public static PullRange currentPullRange() {
         PullRange pullRange = new PullRange();
 
         Date startAt = DateUtils.startOf(Calendar.getInstance());

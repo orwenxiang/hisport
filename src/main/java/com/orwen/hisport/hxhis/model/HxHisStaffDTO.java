@@ -60,6 +60,6 @@ public class HxHisStaffDTO implements Serializable {
     public boolean isEnabled(String statusCode) {
         return Objects.equals(status, statusCode)
                 && DateUtils.isBetween(validStart, validEnd, new Date())
-                && retireDate != null;
+                && retireDate == null;
     }
 }

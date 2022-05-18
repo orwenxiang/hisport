@@ -20,7 +20,7 @@ import java.util.Objects;
 @ToString
 public class HxHisStaffDTO implements Serializable {
     private static final long serialVersionUID = 1L;
-    @JacksonXmlProperty(localName = "CTCP_Code")
+    @JacksonXmlProperty(localName = "CTCP_JobNumber")
     private String id;
     @JacksonXmlProperty(localName = "CTCP_Name")
     private String name;
@@ -34,9 +34,10 @@ public class HxHisStaffDTO implements Serializable {
 
     @JacksonXmlProperty(localName = "CTCP_PositionSeqCode")
     private String positionCode;
-    
+
     @JacksonXmlProperty(localName = "CTCP_Telephone")
     private String phone;
+
     @JacksonXmlProperty(localName = "CTCP_SexCode")
     private String sexCode;
     @JacksonXmlProperty(localName = "CTCP_StartDate")

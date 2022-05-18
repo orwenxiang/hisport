@@ -67,7 +67,9 @@ public class HisPortDispatcher {
         } else {
             ArtemisLeaveDTO leaveDTO = new ArtemisLeaveDTO();
             leaveDTO.setPersonId(staffDTO.getId());
-            leaveDTO.setLeaveAt(Date.from(staffDTO.updateAt().toInstant(HxPortDefs.DEFAULT_ZONE_OFFSET)));
+            leaveDTO.setLeaveAt(staffDTO.getRetireDate() == null ? new Date()
+                    : Date.from(staffDTO.getRetireDate().atStartOfDay()
+                    .toInstant(HxPortDefs.DEFAULT_ZONE_OFFSET)));
             rabbitOperation.convertAndSend(HxPortDefs.STAFF_LEAVED_QUEUE, leaveDTO);
         }
     }

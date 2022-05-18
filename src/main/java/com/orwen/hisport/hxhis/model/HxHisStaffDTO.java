@@ -10,7 +10,6 @@ import lombok.ToString;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
 import java.util.Objects;
@@ -53,17 +52,14 @@ public class HxHisStaffDTO implements Serializable {
     @JacksonXmlProperty(localName = "CTCP_UpdateTime")
     private LocalTime updateTime;
 
-    @JsonIgnore
-    public boolean isEnabled(String statusCode) {
-        return Objects.equals(status, statusCode) &&
-                DateUtils.isBetween(validStart, validEnd, new Date());
-    }
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JacksonXmlProperty(localName = "CTCP_RetireDate")
+    private LocalDate retireDate;
 
     @JsonIgnore
-    public LocalDateTime updateAt() {
-        if (updateTime == null) {
-            return null;
-        }
-        return updateTime.atDate(updateDate);
+    public boolean isEnabled(String statusCode) {
+        return Objects.equals(status, statusCode)
+                && DateUtils.isBetween(validStart, validEnd, new Date())
+                && retireDate != null;
     }
 }

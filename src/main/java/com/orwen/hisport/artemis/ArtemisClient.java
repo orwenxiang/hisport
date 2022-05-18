@@ -92,6 +92,11 @@ public class ArtemisClient {
     @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.DEPART_CHANGED_QUEUE), concurrency = "1", ackMode = "MANUAL")
     public void departChanged(ArtemisDepartPO artemisDepart, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
+        departChanged(artemisDepart);
+        channel.basicAck(tag, false);
+    }
+
+    public void departChanged(ArtemisDepartPO artemisDepart) {
         if (!Objects.equals(departCache.put(artemisDepart.getDepartId(), artemisDepart), artemisDepart)) {
             ArtemisDepartPO departPO = departs.findOne(qArtemisDepart.departId.eq(artemisDepart.getDepartId()))
                     .orElseGet(() -> {
@@ -106,7 +111,6 @@ public class ArtemisClient {
             syncDepart(departCache.values().stream().
                     filter(ArtemisDepartPO::getEnabled).collect(Collectors.toList()));
         }
-        channel.basicAck(tag, false);
     }
 
     @SneakyThrows

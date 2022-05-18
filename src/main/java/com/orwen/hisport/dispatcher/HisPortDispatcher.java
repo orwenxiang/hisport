@@ -50,7 +50,11 @@ public class HisPortDispatcher {
         departPO.setParentId(StringUtils.hasText(departDTO.getParent()) ? departDTO.getParent() : "-1");
         departPO.setName(departDTO.getName());
         departPO.setEnabled(departDTO.isEnable());
-        rabbitOperation.convertAndSend(HxPortDefs.DEPART_CHANGED_QUEUE, departPO);
+        if (properties.getArtemis().isAsyncNotify()) {
+            rabbitOperation.convertAndSend(HxPortDefs.DEPART_CHANGED_QUEUE, departPO);
+        } else {
+            artemisClient.departChanged(departPO);
+        }
     }
 
     public void staffChanged(HxHisStaffDTO staffDTO) {
@@ -63,14 +67,22 @@ public class HisPortDispatcher {
             artemisStaffDTO.setGender(HisPortGender.ofHxHisCode(staffDTO.getSexCode()));
             artemisStaffDTO.setPhone(staffDTO.getPhone());
             artemisStaffDTO.setRole(guessStaffRole(staffDTO.getPositionCode()));
-            rabbitOperation.convertAndSend(HxPortDefs.STAFF_JOINED_QUEUE, artemisStaffDTO);
+            if (properties.getArtemis().isAsyncNotify()) {
+                rabbitOperation.convertAndSend(HxPortDefs.STAFF_JOINED_QUEUE, artemisStaffDTO);
+            } else {
+                artemisClient.staffJoin(artemisStaffDTO);
+            }
         } else {
             ArtemisLeaveDTO leaveDTO = new ArtemisLeaveDTO();
             leaveDTO.setPersonId(staffDTO.getId());
             leaveDTO.setLeaveAt(staffDTO.getRetireDate() == null ? new Date()
                     : Date.from(staffDTO.getRetireDate().atStartOfDay()
                     .toInstant(HxPortDefs.DEFAULT_ZONE_OFFSET)));
-            rabbitOperation.convertAndSend(HxPortDefs.STAFF_LEAVED_QUEUE, leaveDTO);
+            if (properties.getArtemis().isAsyncNotify()) {
+                rabbitOperation.convertAndSend(HxPortDefs.STAFF_LEAVED_QUEUE, leaveDTO);
+            } else {
+                artemisClient.staffLeave(leaveDTO);
+            }
         }
     }
 
@@ -87,29 +99,41 @@ public class HisPortDispatcher {
         ArtemisPatientDTO artemisPatientDTO = new ArtemisPatientDTO();
         BeanUtils.copyProperties(patientPO, artemisPatientDTO, "id");
         artemisPatientDTO.setId(patientPO.getPersonId());
-//        rabbitOperation.convertAndSend(HxPortDefs.PATIENT_JOINED_QUEUE, artemisPatientDTO);
-        artemisClient.patientJoin(artemisPatientDTO);
+        if (properties.getArtemis().isAsyncNotify()) {
+            rabbitOperation.convertAndSend(HxPortDefs.PATIENT_JOINED_QUEUE, artemisPatientDTO);
+        } else {
+            artemisClient.patientJoin(artemisPatientDTO);
+        }
     }
 
     public void patientLeave(HxHisLeavePO leavePO) {
         ArtemisLeaveDTO artemisLeaveDTO = new ArtemisLeaveDTO();
         BeanUtils.copyProperties(leavePO, artemisLeaveDTO);
-//        rabbitOperation.convertAndSend(HxPortDefs.PATIENT_LEAVED_QUEUE, artemisLeaveDTO);
-        artemisClient.patientLeave(artemisLeaveDTO);
+        if (properties.getArtemis().isAsyncNotify()) {
+            rabbitOperation.convertAndSend(HxPortDefs.PATIENT_LEAVED_QUEUE, artemisLeaveDTO);
+        } else {
+            artemisClient.patientLeave(artemisLeaveDTO);
+        }
     }
 
     public void patientTransfer(HxHisTransferPO transferPO) {
         ArtemisTransferDTO transferDTO = new ArtemisTransferDTO();
         BeanUtils.copyProperties(transferPO, transferDTO, "latestPullAt");
-//        rabbitOperation.convertAndSend(HxPortDefs.PATIENT_TRANSFER_QUEUE, transferDTO);
-        artemisClient.patientTransfer(transferDTO);
+        if (properties.getArtemis().isAsyncNotify()) {
+            rabbitOperation.convertAndSend(HxPortDefs.PATIENT_TRANSFER_QUEUE, transferDTO);
+        } else {
+            artemisClient.patientTransfer(transferDTO);
+        }
     }
 
     public void patientCare(HxHisCarePO carePO) {
         ArtemisCareDTO artemisCareDTO = new ArtemisCareDTO();
         BeanUtils.copyProperties(carePO, artemisCareDTO, "id", "latestPullAt", "mpNat");
         artemisCareDTO.setMpNat(Boolean.parseBoolean(carePO.getMpNat()));
-//        rabbitOperation.convertAndSend(HxPortDefs.CARE_JOINED_QUEUE, artemisCareDTO);
-        artemisClient.careJoin(artemisCareDTO);
+        if (properties.getArtemis().isAsyncNotify()) {
+            rabbitOperation.convertAndSend(HxPortDefs.CARE_JOINED_QUEUE, artemisCareDTO);
+        } else {
+            artemisClient.careJoin(artemisCareDTO);
+        }
     }
 }

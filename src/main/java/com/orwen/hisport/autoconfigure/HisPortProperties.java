@@ -52,6 +52,9 @@ public class HisPortProperties {
         @Getter
         @Setter
         private Map<ArtemisRole, List<String>> roleCodes;
+        @Getter
+        @Setter
+        private boolean asyncNotify = false;
 
         @Override
         public String getHost() {

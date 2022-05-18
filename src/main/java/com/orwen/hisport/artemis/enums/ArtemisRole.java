@@ -4,8 +4,6 @@ import com.orwen.hisport.utils.EnumStrTyped;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Objects;
-
 @Getter
 @RequiredArgsConstructor
 public enum ArtemisRole implements EnumStrTyped<ArtemisRole> {
@@ -32,15 +30,6 @@ public enum ArtemisRole implements EnumStrTyped<ArtemisRole> {
     ;
 
     private final String type;
-
-    public static ArtemisRole ofHxHisCode(String code) {
-        for (ArtemisRole gender : values()) {
-            if (Objects.equals(gender.getType(), code)) {
-                return gender;
-            }
-        }
-        return ArtemisRole.OTHER;
-    }
 
     public static final class Deserializer extends EnumStrTyped.Deserializer<ArtemisRole> {
 

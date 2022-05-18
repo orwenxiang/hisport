@@ -1,6 +1,7 @@
 package com.orwen.hisport.autoconfigure;
 
 import com.hikvision.artemis.sdk.config.ArtemisConfig;
+import com.orwen.hisport.artemis.enums.ArtemisRole;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -8,6 +9,8 @@ import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -45,6 +48,9 @@ public class HisPortProperties {
         @Getter
         @Setter
         private RabbitProperties.Retry retry;
+        @Getter
+        @Setter
+        private Map<ArtemisRole, List<String>> roleCodes;
 
         @Override
         public String getHost() {

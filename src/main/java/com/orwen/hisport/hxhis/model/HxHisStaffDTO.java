@@ -32,8 +32,9 @@ public class HxHisStaffDTO implements Serializable {
     @JacksonXmlProperty(localName = "CTCP_PositionStatus")
     private String status;
 
-    @JacksonXmlProperty(localName = "CTCP_CareProvTypeCode")
-    private String roleCode;
+    @JacksonXmlProperty(localName = "CTCP_PositionSeqCode")
+    private String positionCode;
+    
     @JacksonXmlProperty(localName = "CTCP_Telephone")
     private String phone;
     @JacksonXmlProperty(localName = "CTCP_SexCode")

@@ -18,9 +18,13 @@ import org.springframework.amqp.rabbit.core.RabbitOperations;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.PostConstruct;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -32,6 +36,13 @@ public class HisPortDispatcher {
 
     @Autowired
     private HisPortProperties properties;
+
+    private Map<ArtemisRole, List<String>> roleCodes;
+
+    @PostConstruct
+    void init() {
+        roleCodes = properties.getArtemis().getRoleCodes();
+    }
 
     public void departChanged(HxHisCommonDepartDTO departDTO) {
         ArtemisDepartPO departPO = new ArtemisDepartPO();
@@ -51,7 +62,7 @@ public class HisPortDispatcher {
             artemisStaffDTO.setDepartId(staffDTO.getDepartId());
             artemisStaffDTO.setGender(HisPortGender.ofHxHisCode(staffDTO.getSexCode()));
             artemisStaffDTO.setPhone(staffDTO.getPhone());
-            artemisStaffDTO.setRole(ArtemisRole.ofHxHisCode(staffDTO.getRoleCode()));
+            artemisStaffDTO.setRole(guessStaffRole(staffDTO.getPositionCode()));
             rabbitOperation.convertAndSend(HxPortDefs.STAFF_JOINED_QUEUE, artemisStaffDTO);
         } else {
             ArtemisLeaveDTO leaveDTO = new ArtemisLeaveDTO();
@@ -59,6 +70,15 @@ public class HisPortDispatcher {
             leaveDTO.setLeaveAt(Date.from(staffDTO.updateAt().toInstant(HxPortDefs.DEFAULT_ZONE_OFFSET)));
             rabbitOperation.convertAndSend(HxPortDefs.STAFF_LEAVED_QUEUE, leaveDTO);
         }
+    }
+
+    protected ArtemisRole guessStaffRole(String positionCode) {
+        if (!StringUtils.hasText(positionCode)) {
+            return ArtemisRole.OTHER;
+        }
+        return roleCodes.entrySet().stream().filter(item -> !CollectionUtils.isEmpty(item.getValue()))
+                .filter(entry -> entry.getValue().contains(positionCode))
+                .findFirst().map(Map.Entry::getKey).orElse(ArtemisRole.OTHER);
     }
 
     public void patientEntry(HxHisPatientPO patientPO) {

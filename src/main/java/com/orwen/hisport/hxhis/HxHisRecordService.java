@@ -15,7 +15,6 @@ public class HxHisRecordService {
     private HxHisRecordRepository records;
 
     public void storeRecord(HxHisRecordPO hisRecordPO) {
-        log.debug("Store the hx his record {}", hisRecordPO);
         records.findOne(qRecord.type.eq(hisRecordPO.getType()).and(qRecord.pullAt.eq(hisRecordPO.getPullAt())))
                 .ifPresentOrElse(hisRecord -> log.debug("The hx his record type {} and pull at {}is existed ",
                                 hisRecordPO.getType(), hisRecordPO.getPullAt()),

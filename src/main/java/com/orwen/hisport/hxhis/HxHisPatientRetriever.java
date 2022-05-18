@@ -71,11 +71,14 @@ public class HxHisPatientRetriever implements MessageListener<String> {
 
     private Duration patientPullRange;
 
+    private Duration patientPullExtendIn;
+
     private String instanceId;
 
     @PostConstruct
     void init() {
         patientPullRange = properties.getPull().getRange();
+        patientPullExtendIn = properties.getPull().getExtendIn();
         instanceId = redissonClient.getId();
         patientPullerTopic.addListener(String.class, this);
     }
@@ -168,7 +171,7 @@ public class HxHisPatientRetriever implements MessageListener<String> {
         }
         CountDownLatch pullCount = new CountDownLatch(pullRanges.size());
         pullRanges.forEach(pullRange -> patientPullExecutor.submit(() -> {
-            patientPuller.pull(pullRange);
+            patientPuller.pull(pullRange.extendIn(patientPullExtendIn));
             pullCount.countDown();
         }));
         pullCount.await();

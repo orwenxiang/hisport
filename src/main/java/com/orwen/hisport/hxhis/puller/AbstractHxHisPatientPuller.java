@@ -148,7 +148,7 @@ public abstract class AbstractHxHisPatientPuller {
         }
 
         String rawResponseBody = responseEntity.getBody();
-        
+
         log.debug("Retrieve patient response by method code {} and request pull range {}  with raw body {}", methodCode, requestStr, rawResponseBody);
 
         return splitRawResponse(rawResponseBody, toString ? RETURN_START_KEY_TO_STRING : RETURN_START_KEY_TO_STREAM,
@@ -246,6 +246,13 @@ public abstract class AbstractHxHisPatientPuller {
         @JsonIgnore
         public PullRange nextDuration(Duration duration) {
             return new PullRange(endDate, duration);
+        }
+
+        @JsonIgnore
+        public PullRange extendIn(Duration duration) {
+            Date startAt = new Date(this.startTime.getTime() - duration.toMillis());
+            Date endAt = new Date(this.startTime.getTime() + duration.toMillis());
+            return new PullRange(startAt, startAt, endAt, endAt);
         }
     }
 }

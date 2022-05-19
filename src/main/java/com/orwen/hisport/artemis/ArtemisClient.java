@@ -3,22 +3,17 @@ package com.orwen.hisport.artemis;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hikvision.artemis.sdk.ArtemisHttpUtil;
-import com.orwen.hisport.artemis.dbaccess.ArtemisDepartPO;
-import com.orwen.hisport.artemis.dbaccess.QArtemisDepartPO;
-import com.orwen.hisport.artemis.dbaccess.repository.ArtemisDepartRepository;
 import com.orwen.hisport.artemis.model.*;
 import com.orwen.hisport.autoconfigure.HisPortProperties;
 import com.orwen.hisport.defs.HxPortDefs;
 import com.rabbitmq.client.Channel;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLocalCachedMap;
 import org.springframework.amqp.rabbit.annotation.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.jackson.JacksonProperties;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.lang.Nullable;
@@ -26,22 +21,17 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TimeZone;
-import java.util.concurrent.locks.Lock;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(prefix = "hisport.artemis", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class ArtemisClient {
-    private static final QArtemisDepartPO qArtemisDepart = QArtemisDepartPO.artemisDepartPO;
     private static final String CONTENT_TYPE = "application/json";
     private static final String DATE_FORMAT = "yyyy/MM/dd HH:mm:ss";
 
@@ -51,13 +41,6 @@ public class ArtemisClient {
     private Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder;
     @Autowired
     private JacksonProperties jacksonProperties;
-    @Autowired
-    private ArtemisDepartRepository departs;
-
-    @Autowired
-    @Qualifier("artemisDepartCache")
-    private RLocalCachedMap<String, ArtemisDepartPO> departCache;
-
     @Autowired(required = false)
     @Qualifier("artemisRetryTemplate")
     private RetryTemplate artemisRetryTemplate;
@@ -78,50 +61,26 @@ public class ArtemisClient {
         dateFormat.setTimeZone(timeZone);
         jackson2ObjectMapperBuilder.dateFormat(dateFormat);
         objectMapper = jackson2ObjectMapperBuilder.build();
-
-        if (CollectionUtils.isEmpty(departCache)) {
-            Lock loadDataLock = departCache.getLock("load_data_lock");
-            if (loadDataLock.tryLock()) {
-                try {
-                    departs.findAll().forEach(item -> departCache.putAsync(item.getDepartId(), item));
-                } finally {
-                    loadDataLock.unlock();
-                }
-            }
-        }
     }
 
     @SneakyThrows
     @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.DEPART_CHANGED_QUEUE), concurrency = "1", ackMode = "MANUAL")
-    public void departChanged(ArtemisDepartPO artemisDepart, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
-        departChanged(artemisDepart);
+    public void departChanged(ArtemisDepartDTO artemisDepart, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
+        syncDepart(List.of(artemisDepart));
         channel.basicAck(tag, false);
     }
 
-    public void departChanged(ArtemisDepartPO artemisDepart) {
-        if (!Objects.equals(departCache.put(artemisDepart.getDepartId(), artemisDepart), artemisDepart)) {
-            ArtemisDepartPO departPO = departs.findOne(qArtemisDepart.departId.eq(artemisDepart.getDepartId()))
-                    .orElseGet(() -> {
-                        ArtemisDepartPO artemisDepartPO = new ArtemisDepartPO();
-                        artemisDepartPO.setDepartId(artemisDepart.getDepartId());
-                        return artemisDepartPO;
-                    });
-            departPO.setName(artemisDepart.getName());
-            departPO.setParentId(artemisDepart.getParentId());
-            departPO.setEnabled(artemisDepart.getEnabled());
-            departs.save(departPO);
-            syncDepart(departCache.values().stream().
-                    filter(ArtemisDepartPO::getEnabled).collect(Collectors.toList()));
-        }
+    public void departChanged(ArtemisDepartDTO artemisDepart) {
+        syncDepart(List.of(artemisDepart));
     }
 
     @SneakyThrows
-    protected synchronized void syncDepart(Collection<ArtemisDepartPO> departs) {
+    protected synchronized void syncDepart(Collection<ArtemisDepartDTO> departs) {
         doWithRetry(() -> {
             ArtemisResponse<Void> response = doRequest("/orgSync", departs, new TypeReference<>() {
             });
             checkResponse(response, departs, "Failed to sync department");
-            log.debug("Success access artemis to department sync with department is {}", departs.size());
+            log.debug("Success access artemis to department sync with department is {}", departs);
         });
     }
 

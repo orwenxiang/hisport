@@ -1,6 +1,5 @@
 package com.orwen.hisport.autoconfigure;
 
-import com.orwen.hisport.artemis.dbaccess.ArtemisDepartPO;
 import com.orwen.hisport.common.dbaccess.repository.DBAccessRepositoryImpl;
 import com.orwen.hisport.defs.HxPortDefs;
 import org.redisson.api.*;
@@ -83,12 +82,6 @@ public class HisPortAutoConfiguration {
         restTemplate.setMessageConverters(List.of(messageConverter));
 
         return restTemplate;
-    }
-
-    @Bean("artemisDepartCache")
-    public RLocalCachedMap<String, ArtemisDepartPO> artemisDepartCache() {
-        return redissonClient.getLocalCachedMap("artemis_depart_cache",
-                LocalCachedMapOptions.<String, ArtemisDepartPO>defaults().evictionPolicy(LocalCachedMapOptions.EvictionPolicy.SOFT));
     }
 
     @Bean("artemisRetryTemplate")

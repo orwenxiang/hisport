@@ -1,7 +1,6 @@
 package com.orwen.hisport.dispatcher;
 
 import com.orwen.hisport.artemis.ArtemisClient;
-import com.orwen.hisport.artemis.dbaccess.ArtemisDepartPO;
 import com.orwen.hisport.artemis.enums.ArtemisRole;
 import com.orwen.hisport.artemis.model.*;
 import com.orwen.hisport.autoconfigure.HisPortProperties;
@@ -45,15 +44,15 @@ public class HisPortDispatcher {
     }
 
     public void departChanged(HxHisCommonDepartDTO departDTO) {
-        ArtemisDepartPO departPO = new ArtemisDepartPO();
-        departPO.setDepartId(departDTO.getId());
-        departPO.setParentId(StringUtils.hasText(departDTO.getParent()) ? departDTO.getParent() : "-1");
-        departPO.setName(departDTO.getName());
-        departPO.setEnabled(departDTO.isEnable());
+        ArtemisDepartDTO artemisDepart = new ArtemisDepartDTO();
+        artemisDepart.setDepartId(departDTO.getId());
+        artemisDepart.setParentId(StringUtils.hasText(departDTO.getParent()) ? departDTO.getParent() : "-1");
+        artemisDepart.setName(departDTO.getName());
+        artemisDepart.setEnabled(departDTO.isEnable());
         if (properties.getArtemis().isAsyncNotify()) {
-            rabbitOperation.convertAndSend(HxPortDefs.DEPART_CHANGED_QUEUE, departPO);
+            rabbitOperation.convertAndSend(HxPortDefs.DEPART_CHANGED_QUEUE, artemisDepart);
         } else if (artemisClient != null) {
-            artemisClient.departChanged(departPO);
+            artemisClient.departChanged(artemisDepart);
         }
     }
 

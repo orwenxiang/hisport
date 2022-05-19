@@ -7,6 +7,7 @@ import com.orwen.hisport.utils.DateUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -25,8 +26,10 @@ public class HxHisStaffDTO implements Serializable {
     private String name;
     @JacksonXmlProperty(localName = "CTCP_IDCardNO")
     private String certNum;
+    @JacksonXmlProperty(localName = "CTCP_DeptHierarchyCode")
+    private String adminDepartId;
     @JacksonXmlProperty(localName = "CTCP_WorkOrgCode")
-    private String departId;
+    private String workDepartId;
 
     @JacksonXmlProperty(localName = "CTCP_PositionStatus")
     private String status;
@@ -61,5 +64,13 @@ public class HxHisStaffDTO implements Serializable {
         return Objects.equals(status, statusCode)
                 && DateUtils.isBetween(validStart, validEnd, new Date())
                 && retireDate == null;
+    }
+
+    @JsonIgnore
+    public String departId() {
+        if (StringUtils.hasText(workDepartId)) {
+            return workDepartId;
+        }
+        return adminDepartId;
     }
 }

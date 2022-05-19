@@ -63,7 +63,7 @@ public class HisPortDispatcher {
             artemisStaffDTO.setId(staffDTO.getId());
             artemisStaffDTO.setName(staffDTO.getName());
             artemisStaffDTO.setCertNum(staffDTO.getCertNum());
-            artemisStaffDTO.setDepartId(staffDTO.getDepartId());
+            artemisStaffDTO.setDepartId(staffDTO.departId());
             artemisStaffDTO.setGender(HisPortGender.ofHxHisCode(staffDTO.getSexCode()));
             artemisStaffDTO.setPhone(staffDTO.getPhone());
             artemisStaffDTO.setRole(guessStaffRole(staffDTO.getPositionCode()));

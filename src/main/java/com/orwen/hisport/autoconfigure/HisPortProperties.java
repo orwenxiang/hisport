@@ -44,6 +44,9 @@ public class HisPortProperties {
         private String appSecret;
         @Getter
         @Setter
+        private boolean enabled = true;
+        @Getter
+        @Setter
         private String schema = "https://";
         @Getter
         @Setter

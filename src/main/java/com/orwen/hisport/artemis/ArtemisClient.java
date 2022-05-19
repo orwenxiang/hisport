@@ -18,6 +18,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.jackson.JacksonProperties;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.lang.Nullable;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "hisport.artemis", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class ArtemisClient {
     private static final QArtemisDepartPO qArtemisDepart = QArtemisDepartPO.artemisDepartPO;
     private static final String CONTENT_TYPE = "application/json";

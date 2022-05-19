@@ -40,7 +40,7 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(prefix = "hisport.artemis", name = "enabled", value = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "hisport.pull", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class HxHisPatientRetriever implements MessageListener<String> {
     private static final String RETRIEVE_PULLER_LOCK = "HX_HIS_PATIENT_RETRIEVER_PULLING";
     private static final QKeyValuePO qKeyValue = QKeyValuePO.keyValuePO;

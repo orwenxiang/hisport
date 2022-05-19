@@ -31,7 +31,7 @@ import java.util.Map;
 public class HisPortDispatcher {
     @Autowired
     private RabbitOperations rabbitOperation;
-    @Autowired
+    @Autowired(required = false)
     private ArtemisClient artemisClient;
 
     @Autowired
@@ -52,7 +52,7 @@ public class HisPortDispatcher {
         departPO.setEnabled(departDTO.isEnable());
         if (properties.getArtemis().isAsyncNotify()) {
             rabbitOperation.convertAndSend(HxPortDefs.DEPART_CHANGED_QUEUE, departPO);
-        } else {
+        } else if (artemisClient != null) {
             artemisClient.departChanged(departPO);
         }
     }
@@ -69,7 +69,7 @@ public class HisPortDispatcher {
             artemisStaffDTO.setRole(guessStaffRole(staffDTO.getPositionCode()));
             if (properties.getArtemis().isAsyncNotify()) {
                 rabbitOperation.convertAndSend(HxPortDefs.STAFF_JOINED_QUEUE, artemisStaffDTO);
-            } else {
+            } else if (artemisClient != null) {
                 artemisClient.staffJoin(artemisStaffDTO);
             }
         } else {
@@ -80,7 +80,7 @@ public class HisPortDispatcher {
                     .toInstant(HxPortDefs.DEFAULT_ZONE_OFFSET)));
             if (properties.getArtemis().isAsyncNotify()) {
                 rabbitOperation.convertAndSend(HxPortDefs.STAFF_LEAVED_QUEUE, leaveDTO);
-            } else {
+            } else if (artemisClient != null) {
                 artemisClient.staffLeave(leaveDTO);
             }
         }
@@ -101,7 +101,7 @@ public class HisPortDispatcher {
         artemisPatientDTO.setId(patientPO.getPersonId());
         if (properties.getArtemis().isAsyncNotify()) {
             rabbitOperation.convertAndSend(HxPortDefs.PATIENT_JOINED_QUEUE, artemisPatientDTO);
-        } else {
+        } else if (artemisClient != null) {
             artemisClient.patientJoin(artemisPatientDTO);
         }
     }
@@ -111,7 +111,7 @@ public class HisPortDispatcher {
         BeanUtils.copyProperties(leavePO, artemisLeaveDTO);
         if (properties.getArtemis().isAsyncNotify()) {
             rabbitOperation.convertAndSend(HxPortDefs.PATIENT_LEAVED_QUEUE, artemisLeaveDTO);
-        } else {
+        } else if (artemisClient != null) {
             artemisClient.patientLeave(artemisLeaveDTO);
         }
     }
@@ -121,7 +121,7 @@ public class HisPortDispatcher {
         BeanUtils.copyProperties(transferPO, transferDTO, "latestPullAt");
         if (properties.getArtemis().isAsyncNotify()) {
             rabbitOperation.convertAndSend(HxPortDefs.PATIENT_TRANSFER_QUEUE, transferDTO);
-        } else {
+        } else if (artemisClient != null) {
             artemisClient.patientTransfer(transferDTO);
         }
     }
@@ -132,7 +132,7 @@ public class HisPortDispatcher {
         artemisCareDTO.setMpNat(Boolean.parseBoolean(carePO.getMpNat()));
         if (properties.getArtemis().isAsyncNotify()) {
             rabbitOperation.convertAndSend(HxPortDefs.CARE_JOINED_QUEUE, artemisCareDTO);
-        } else {
+        } else if (artemisClient != null) {
             artemisClient.careJoin(artemisCareDTO);
         }
     }

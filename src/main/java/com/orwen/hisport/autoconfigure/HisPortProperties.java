@@ -18,6 +18,7 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "hisport")
 public class HisPortProperties {
     private String onJobCode = "001001001001001";
+    private boolean processMdmCallback = true;
     private HikVisionArtemisConfig artemis = new HikVisionArtemisConfig();
     private HxHisPatientPullConfig pull = new HxHisPatientPullConfig();
 
@@ -25,6 +26,7 @@ public class HisPortProperties {
     @Setter
     @ToString
     public static class HxHisPatientPullConfig {
+        private boolean enabled = true;
         private String endpoint = "http://172.22.252.46/csp/huaxi/Huaxi.InvokeMessage.BS.InvokeService.CLS?WSDL";
         private Integer weight = 2;
         private Duration range = Duration.ofMinutes(10);

@@ -2,6 +2,7 @@ package com.orwen.hisport.hxhis;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.orwen.hisport.autoconfigure.HisPortProperties;
 import com.orwen.hisport.dispatcher.HisPortDispatcher;
 import com.orwen.hisport.hxhis.dbaccess.HxHisRecordPO;
 import com.orwen.hisport.hxhis.model.HxHisLevel7DepartDTO;
@@ -47,6 +48,8 @@ public class HxHisMdmCallback {
     private HxHisRecordService recordService;
     @Autowired
     private HisPortDispatcher dispatcher;
+    @Autowired
+    private HisPortProperties properties;
 
     private XmlMapper objectMapper;
 
@@ -78,6 +81,11 @@ public class HxHisMdmCallback {
 
         HxHisRequest<Map> rawNotifyObject = objectMapper.readValue(content, new TypeReference<>() {
         });
+
+        if (!properties.isProcessMdmCallback()) {
+            log.warn("Not process mdm callback");
+            return objectMapper.writeValueAsString(HxHisResponse.success(rawNotifyObject.getHeader()));
+        }
 
         HEADER_HOLDER.set(rawNotifyObject.getHeader());
 

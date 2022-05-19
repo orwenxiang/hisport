@@ -18,6 +18,7 @@ import org.redisson.api.listener.MessageListener;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -39,6 +40,7 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "hisport.artemis", name = "enabled", value = "true", matchIfMissing = true)
 public class HxHisPatientRetriever implements MessageListener<String> {
     private static final String RETRIEVE_PULLER_LOCK = "HX_HIS_PATIENT_RETRIEVER_PULLING";
     private static final QKeyValuePO qKeyValue = QKeyValuePO.keyValuePO;

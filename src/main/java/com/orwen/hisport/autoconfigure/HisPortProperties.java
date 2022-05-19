@@ -19,6 +19,7 @@ import java.util.Map;
 public class HisPortProperties {
     private String onJobCode = "001001001001001";
     private boolean processMdmCallback = true;
+    private boolean storeRecords = true;
     private HikVisionArtemisConfig artemis = new HikVisionArtemisConfig();
     private HxHisPatientPullConfig pull = new HxHisPatientPullConfig();
 

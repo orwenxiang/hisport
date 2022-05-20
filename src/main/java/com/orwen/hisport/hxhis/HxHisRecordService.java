@@ -22,9 +22,13 @@ public class HxHisRecordService {
             log.debug("Not store record {}", hisRecordPO);
             return;
         }
-        records.findOne(qRecord.type.eq(hisRecordPO.getType()).and(qRecord.pullAt.eq(hisRecordPO.getPullAt())))
-                .ifPresentOrElse(hisRecord -> log.debug("The hx his record type {} and pull at {}is existed ",
-                                hisRecordPO.getType(), hisRecordPO.getPullAt()),
-                        () -> records.save(hisRecordPO));
+        try {
+            records.findOne(qRecord.type.eq(hisRecordPO.getType()).and(qRecord.pullAt.eq(hisRecordPO.getPullAt())))
+                    .ifPresentOrElse(hisRecord -> log.debug("The hx his record type {} and pull at {}is existed ",
+                                    hisRecordPO.getType(), hisRecordPO.getPullAt()),
+                            () -> records.save(hisRecordPO));
+        } catch (Throwable e) {
+            log.warn("Ignore exception", e);
+        }
     }
 }

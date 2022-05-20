@@ -21,6 +21,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.ObjectUtils;
@@ -90,6 +91,7 @@ public abstract class AbstractHxHisPatientPuller {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Transactional
     public void pull(PullRange pullRange) {
         try {
             log.debug("Doing {} pull with range {}", getClass().getSimpleName(), pullRange);

@@ -18,6 +18,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StreamUtils;
@@ -68,6 +69,7 @@ public class HxHisMdmCallback {
 
     @SneakyThrows
     @PostMapping
+    @Transactional
     public String notify(HttpServletRequest request) {
         HEADER_HOLDER.remove();
         InputStream httpInputStream = request.getInputStream();

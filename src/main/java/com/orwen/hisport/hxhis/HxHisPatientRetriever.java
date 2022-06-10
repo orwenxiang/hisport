@@ -10,14 +10,9 @@ import com.orwen.hisport.hxhis.puller.HxHisCarePuller;
 import com.orwen.hisport.utils.DateUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
-import org.redisson.api.RMap;
-import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
-import org.redisson.api.listener.MessageListener;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -25,23 +20,18 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.Lock;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Slf4j
 @Component
 @ConditionalOnProperty(prefix = "hisport.pull", name = "enabled", havingValue = "true", matchIfMissing = true)
-public class HxHisPatientRetriever implements MessageListener<String> {
+public class HxHisPatientRetriever {
     private static final String RETRIEVE_PULLER_LOCK = "HX_HIS_PATIENT_RETRIEVER_PULLING";
     private static final QKeyValuePO qKeyValue = QKeyValuePO.keyValuePO;
 
@@ -63,75 +53,20 @@ public class HxHisPatientRetriever implements MessageListener<String> {
     @Autowired
     private HxHisCarePuller carePuller;
 
-    @Autowired
-    @Qualifier("patientPullWeights")
-    private RMap<String, Integer> patientPullWeights;
-
-    @Autowired
-    @Qualifier("patientPullerTopic")
-    private RTopic patientPullerTopic;
-
     private Duration patientPullRange;
 
     private Duration patientPullExtendIn;
-
-    private String instanceId;
 
     @PostConstruct
     void init() {
         patientPullRange = properties.getPull().getRange();
         patientPullExtendIn = properties.getPull().getExtendIn();
-        instanceId = redissonClient.getId();
-        patientPullerTopic.addListener(String.class, this);
     }
 
-    @PreDestroy
-    void shutdown() {
-        patientPullerTopic.removeListener(this);
-        patientPullWeights.getLock(instanceId).forceUnlock();
-        patientPullWeights.remove(instanceId);
-    }
 
     @Scheduled(fixedRateString = "${hisport.pull.range}")
     public void scheduleSelectDoPullInstance() {
-        patientPullWeights.put(instanceId, properties.getPull().getWeight());
-        RLock currentInstanceLock = patientPullWeights.getLock(instanceId);
-        if (!currentInstanceLock.isLocked()) {
-            patientPullWeights.getLock(instanceId).lock();
-        }
-
-        Lock pullLock = redissonClient.getLock(RETRIEVE_PULLER_LOCK);
-        if (!pullLock.tryLock()) {
-            log.debug("Do pull instance id selector by other instance");
-            return;
-        }
-        try {
-            if (patientPullWeights.size() < 2) {
-                patientPullerTopic.publishAsync(instanceId);
-                return;
-            }
-
-            List<String> instances = new ArrayList<>();
-
-            patientPullWeights.entrySet().stream().filter(instance -> patientPullWeights.getLock(instanceId).isLocked())
-                    .forEach(entry -> IntStream.range(0, entry.getValue()).forEach(index -> instances.add(entry.getKey())));
-
-            String selectedInstanceId = instances.get(ThreadLocalRandom.current()
-                    .nextInt(0, instances.size()));
-
-            patientPullerTopic.publish(selectedInstanceId);
-        } finally {
-            pullLock.unlock();
-        }
-    }
-
-    @Override
-    public void onMessage(CharSequence channel, String instanceId) {
-        if (!Objects.equals(instanceId, this.instanceId)) {
-            log.debug("The process patient pull instance {} is not current {}", instanceId, this.instanceId);
-            return;
-        }
-        log.debug("Do patient pull in current instance");
+        log.debug("Do patient pull");
 
         Lock pullLock = redissonClient.getLock(RETRIEVE_PULLER_LOCK);
         pullLock.lock();

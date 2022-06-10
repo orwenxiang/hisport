@@ -1,8 +1,10 @@
 package com.orwen.hisport.autoconfigure;
 
 import com.orwen.hisport.common.dbaccess.repository.DBAccessRepositoryImpl;
-import com.orwen.hisport.defs.HxPortDefs;
-import org.redisson.api.*;
+import org.redisson.api.RRateLimiter;
+import org.redisson.api.RateIntervalUnit;
+import org.redisson.api.RateType;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -48,17 +50,6 @@ public class HisPortAutoConfiguration {
         return new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(),
                 Runtime.getRuntime().availableProcessors() * 4, 60,
                 TimeUnit.SECONDS, new LinkedBlockingQueue<>());
-    }
-
-    @Bean(name = "patientPullWeights")
-    public RMap<String, Integer> patientPullWeights() {
-        return redissonClient.getLocalCachedMap("patient_pull_weights",
-                LocalCachedMapOptions.defaults());
-    }
-
-    @Bean(name = "patientPullerTopic")
-    public RTopic patientPullerTopic() {
-        return redissonClient.getTopic(HxPortDefs.PATIENT_PULLER_TOPIC);
     }
 
     @Bean(name = "patientPullRate")

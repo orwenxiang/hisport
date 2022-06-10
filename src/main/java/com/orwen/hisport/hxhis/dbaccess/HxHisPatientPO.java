@@ -41,7 +41,7 @@ public class HxHisPatientPO extends AbstractPersistable {
     private String certNum;
 
     @JsonProperty("phone")
-    @Column(name = "phone", length = 20)
+    @Column(name = "phone", length = 64)
     private String phone;
 
     @JsonProperty("gender")

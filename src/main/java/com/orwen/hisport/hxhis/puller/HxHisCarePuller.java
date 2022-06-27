@@ -5,6 +5,7 @@ import com.orwen.hisport.hxhis.dbaccess.HxHisCarePO;
 import com.orwen.hisport.hxhis.dbaccess.QHxHisCarePO;
 import com.orwen.hisport.hxhis.dbaccess.repository.HxHisCareRepository;
 import com.orwen.hisport.utils.DateUtils;
+import com.orwen.hisport.utils.TransactionRequiresNew;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +23,14 @@ public class HxHisCarePuller extends AbstractHxHisPatientPuller {
     private static final QHxHisCarePO qCare = QHxHisCarePO.hxHisCarePO;
     @Autowired
     private HxHisCareRepository cares;
+    @Autowired
+    private TransactionRequiresNew transactionRequiresNew;
 
     @Override
     protected synchronized void doPull(PullRange pullRange) {
-        List<HxHisCarePO> hisCares = retrievePatientContent(false, "ZJ-GETPATESCORTINFO", pullRange, new TypeReference<>() {
-        });
+        List<HxHisCarePO> hisCares = retrievePatientContent(false,
+                "ZJ-GETPATESCORTINFO", pullRange, new TypeReference<>() {
+                });
         if (CollectionUtils.isEmpty(hisCares)) {
             return;
         }
@@ -43,23 +47,32 @@ public class HxHisCarePuller extends AbstractHxHisPatientPuller {
                         .ifPresentOrElse(carePO -> {
                             log.debug("The patient care with cert num {} and name {} is existed that pulled at {}",
                                     hisCare.getCertCard(), hisCare.getName(), latestPullAt);
-                            storeRecord(hisCare, false, latestPullAt);
-                        }, () -> {
-                            HxHisCarePO usingHisCard = cares.findOne(qCare.certCard.eq(hisCare.getCertCard())).orElse(hisCare);
-                            BeanUtils.copyProperties(hisCare, usingHisCard, "id", "version");
+                            transactionRequiresNew.executeWithoutResult(status
+                                    -> storeRecord(hisCare, false, latestPullAt));
+                        }, () -> transactionRequiresNew.executeWithoutResult(status
+                                -> processHisCareWithNewTransaction(hisCare, latestPullAt))));
 
-                            usingHisCard.setAvailable(true);
-                            usingHisCard.setLatestPullAt(latestPullAt);
-
-                            dispatcher.patientCare(usingHisCard);
-                            cares.save(usingHisCard);
-                            storeRecord(usingHisCard, true, latestPullAt);
-                        }));
-
-        notIncludedIn(localHasCareCertNums, remoteHasCareCertNums)
-                .forEach(certNum -> cares.update().set(qCare.available, false)
-                        .where(qCare.certCard.eq(certNum)).execute());
+        transactionRequiresNew.executeWithoutResult(status ->
+                notIncludedIn(localHasCareCertNums, remoteHasCareCertNums)
+                        .forEach(certNum -> cares.update().set(qCare.available, false)
+                                .where(qCare.certCard.eq(certNum)).execute()));
     }
+
+    protected void processHisCareWithNewTransaction(HxHisCarePO hisCare, Date latestPullAt) {
+        try {
+            HxHisCarePO usingHisCard = cares.findOne(qCare.certCard.eq(hisCare.getCertCard())).orElse(hisCare);
+            BeanUtils.copyProperties(hisCare, usingHisCard, "id", "version");
+
+            usingHisCard.setAvailable(true);
+            usingHisCard.setLatestPullAt(latestPullAt);
+
+            dispatcher.patientCare(usingHisCard);
+            cares.save(usingHisCard);
+        } catch (Throwable e) {
+            log.warn("Ignore sync wrong", e);
+        }
+    }
+
 
     public static PullRange currentPullRange() {
         PullRange pullRange = new PullRange();

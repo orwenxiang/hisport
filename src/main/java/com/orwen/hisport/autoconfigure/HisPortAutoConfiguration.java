@@ -1,6 +1,7 @@
 package com.orwen.hisport.autoconfigure;
 
 import com.orwen.hisport.common.dbaccess.repository.DBAccessRepositoryImpl;
+import com.orwen.hisport.utils.TransactionRequiresNew;
 import org.redisson.api.RRateLimiter;
 import org.redisson.api.RateIntervalUnit;
 import org.redisson.api.RateType;
@@ -21,6 +22,7 @@ import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.client.RestTemplate;
 
@@ -44,6 +46,12 @@ public class HisPortAutoConfiguration {
 
     @Autowired
     private RedissonClient redissonClient;
+
+
+    @Bean
+    public TransactionRequiresNew transactionRequiresNew(PlatformTransactionManager transactionManager) {
+        return new TransactionRequiresNew(transactionManager);
+    }
 
     @Bean(destroyMethod = "shutdown", name = "patientPullExecutor")
     public ExecutorService patientPullExecutor() {

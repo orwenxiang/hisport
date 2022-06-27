@@ -253,7 +253,7 @@ public abstract class AbstractHxHisPatientPuller {
         @JsonIgnore
         public PullRange extendIn(Duration duration) {
             Date startAt = new Date(this.startTime.getTime() - duration.toMillis());
-            Date endAt = new Date(this.startTime.getTime() + duration.toMillis());
+            Date endAt = new Date(this.endTime.getTime() + duration.toMillis());
             return new PullRange(startAt, startAt, endAt, endAt);
         }
     }

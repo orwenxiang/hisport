@@ -55,6 +55,10 @@ public class HxHisCarePuller extends AbstractHxHisPatientPuller {
     protected void processHisCareWithNewTransaction(HxHisCarePO hisCare, Date latestPullAt) {
         cares.findOne(qCare.certCard.eq(hisCare.getCertCard()).and(qCare.available.isTrue()))
                 .ifPresentOrElse(carePO -> {
+                    log.debug("The patient care with cert num {} and name {} is existed that pulled at {}",
+                            hisCare.getCertCard(), hisCare.getName(), latestPullAt);
+                    storeRecord(hisCare, false, latestPullAt);
+                }, () -> {
                     try {
                         HxHisCarePO usingHisCard = cares.findOne(qCare.certCard.eq(hisCare.getCertCard())).orElse(hisCare);
                         BeanUtils.copyProperties(hisCare, usingHisCard, "id", "version");
@@ -67,8 +71,8 @@ public class HxHisCarePuller extends AbstractHxHisPatientPuller {
                     } catch (Throwable e) {
                         log.warn("Ignore sync wrong", e);
                     }
-                }, () -> transactionRequiresNew.executeWithoutResult(status
-                        -> processHisCareWithNewTransaction(hisCare, latestPullAt)));
+                });
+
     }
 
 

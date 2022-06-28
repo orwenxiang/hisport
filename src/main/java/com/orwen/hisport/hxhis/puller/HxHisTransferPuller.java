@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.orwen.hisport.hxhis.dbaccess.HxHisTransferPO;
 import com.orwen.hisport.hxhis.dbaccess.QHxHisTransferPO;
 import com.orwen.hisport.hxhis.dbaccess.repository.HxHisTransferRepository;
+import com.orwen.hisport.utils.TransactionRequiresNew;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
@@ -20,16 +21,24 @@ public class HxHisTransferPuller extends AbstractHxHisPatientPuller {
     private static final QHxHisTransferPO qTransfer = QHxHisTransferPO.hxHisTransferPO;
     @Autowired
     private HxHisTransferRepository transfers;
+    @Autowired
+    private TransactionRequiresNew transactionRequiresNew;
 
     @Override
     protected void doPull(PullRange pullRange) {
-        List<HxHisTransferPO> hisTransfers = retrievePatientContent(false, "ZJ-GETPATTRANSFERINFO", pullRange, new TypeReference<>() {
-        });
+        List<HxHisTransferPO> hisTransfers = retrievePatientContent(false, "ZJ-GETPATTRANSFERINFO",
+                pullRange, new TypeReference<>() {
+                });
         if (CollectionUtils.isEmpty(hisTransfers)) {
             return;
         }
         Date latestPullAt = pullRange.getEndDate();
-        hisTransfers.forEach(hisTransfer -> transfers.findOne(qTransfer.personId.eq(hisTransfer.getPersonId())
+        hisTransfers.forEach(hisTransfer -> transactionRequiresNew.executeWithoutResult(status ->
+                processTransfer(hisTransfer, latestPullAt)));
+    }
+
+    protected void processTransfer(HxHisTransferPO hisTransfer, Date latestPullAt) {
+        transfers.findOne(qTransfer.personId.eq(hisTransfer.getPersonId())
                 .and(qTransfer.transferAt.eq(hisTransfer.getTransferAt()))).ifPresentOrElse(transferPO -> {
                     log.debug("The patient transfer with id {} and at {} is existed that pulled at {}",
                             hisTransfer.getPersonId(), hisTransfer.getTransferAt(), transferPO.getLatestPullAt());
@@ -40,6 +49,6 @@ public class HxHisTransferPuller extends AbstractHxHisPatientPuller {
                     hisTransfer.setLatestPullAt(latestPullAt);
                     transfers.save(hisTransfer);
                     storeRecord(hisTransfer, true, latestPullAt);
-                }));
+                });
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.orwen.hisport.hxhis.dbaccess.HxHisPatientPO;
 import com.orwen.hisport.hxhis.dbaccess.QHxHisPatientPO;
 import com.orwen.hisport.hxhis.dbaccess.repository.HxHisPatientRepository;
+import com.orwen.hisport.utils.TransactionRequiresNew;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
@@ -20,6 +21,8 @@ public class HxHisPatientPuller extends AbstractHxHisPatientPuller {
     private static final QHxHisPatientPO qPatient = QHxHisPatientPO.hxHisPatientPO;
     @Autowired
     private HxHisPatientRepository patients;
+    @Autowired
+    private TransactionRequiresNew transactionRequiresNew;
 
     @Override
     protected void doPull(PullRange pullRange) {
@@ -29,7 +32,12 @@ public class HxHisPatientPuller extends AbstractHxHisPatientPuller {
             return;
         }
         Date latestPullAt = pullRange.getEndDate();
-        hisPatients.forEach(hisPatient -> patients.findOne(qPatient.personId.eq(hisPatient.getPersonId())
+        hisPatients.forEach(hisPatient -> transactionRequiresNew.
+                executeWithoutResult(status -> processPatientEntry(hisPatient, latestPullAt)));
+    }
+
+    protected void processPatientEntry(HxHisPatientPO hisPatient, Date latestPullAt) {
+        patients.findOne(qPatient.personId.eq(hisPatient.getPersonId())
                 .and(qPatient.inHospital.eq(hisPatient.getInHospital()))).ifPresentOrElse(transferPO -> {
                     log.debug("The patient entry with id {} and at {} is existed that pulled at {}",
                             hisPatient.getPersonId(), hisPatient.getInHospital(), transferPO.getLatestPullAt());
@@ -40,6 +48,6 @@ public class HxHisPatientPuller extends AbstractHxHisPatientPuller {
                     hisPatient.setLatestPullAt(latestPullAt);
                     patients.save(hisPatient);
                     storeRecord(hisPatient, true, latestPullAt);
-                }));
+                });
     }
 }

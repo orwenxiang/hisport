@@ -43,14 +43,8 @@ public class HxHisCarePuller extends AbstractHxHisPatientPuller {
         List<String> localHasCareCertNums = localHasCareCertCards();
 
         notIncludedIn(remoteHasCareCertNums, localHasCareCertNums).map(remoteHasCares::get).filter(Objects::nonNull)
-                .forEach(hisCare -> cares.findOne(qCare.certCard.eq(hisCare.getCertCard()).and(qCare.available.isTrue()))
-                        .ifPresentOrElse(carePO -> {
-                            log.debug("The patient care with cert num {} and name {} is existed that pulled at {}",
-                                    hisCare.getCertCard(), hisCare.getName(), latestPullAt);
-                            transactionRequiresNew.executeWithoutResult(status
-                                    -> storeRecord(hisCare, false, latestPullAt));
-                        }, () -> transactionRequiresNew.executeWithoutResult(status
-                                -> processHisCareWithNewTransaction(hisCare, latestPullAt))));
+                .forEach(hisCare -> transactionRequiresNew.executeWithoutResult(status ->
+                        processHisCareWithNewTransaction(hisCare, latestPullAt)));
 
         transactionRequiresNew.executeWithoutResult(status ->
                 notIncludedIn(localHasCareCertNums, remoteHasCareCertNums)
@@ -59,18 +53,22 @@ public class HxHisCarePuller extends AbstractHxHisPatientPuller {
     }
 
     protected void processHisCareWithNewTransaction(HxHisCarePO hisCare, Date latestPullAt) {
-        try {
-            HxHisCarePO usingHisCard = cares.findOne(qCare.certCard.eq(hisCare.getCertCard())).orElse(hisCare);
-            BeanUtils.copyProperties(hisCare, usingHisCard, "id", "version");
+        cares.findOne(qCare.certCard.eq(hisCare.getCertCard()).and(qCare.available.isTrue()))
+                .ifPresentOrElse(carePO -> {
+                    try {
+                        HxHisCarePO usingHisCard = cares.findOne(qCare.certCard.eq(hisCare.getCertCard())).orElse(hisCare);
+                        BeanUtils.copyProperties(hisCare, usingHisCard, "id", "version");
 
-            usingHisCard.setAvailable(true);
-            usingHisCard.setLatestPullAt(latestPullAt);
+                        usingHisCard.setAvailable(true);
+                        usingHisCard.setLatestPullAt(latestPullAt);
 
-            dispatcher.patientCare(usingHisCard);
-            cares.save(usingHisCard);
-        } catch (Throwable e) {
-            log.warn("Ignore sync wrong", e);
-        }
+                        dispatcher.patientCare(usingHisCard);
+                        cares.save(usingHisCard);
+                    } catch (Throwable e) {
+                        log.warn("Ignore sync wrong", e);
+                    }
+                }, () -> transactionRequiresNew.executeWithoutResult(status
+                        -> processHisCareWithNewTransaction(hisCare, latestPullAt)));
     }
 
 

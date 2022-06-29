@@ -70,15 +70,8 @@ public class HxHisPatientRetriever {
         carePuller.pull(HxHisCarePuller.currentPullRange());
 
         Date latestPullDate = pullRanges.get(pullRanges.size() - 1).getEndDate();
-        KeyValuePO keyValue = keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT))
-                .orElseGet(() -> {
-                    KeyValuePO keyValuePO = new KeyValuePO();
-                    keyValuePO.setKey(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT);
-                    return keyValuePO;
-                });
-        keyValue.setValue(String.valueOf(latestPullDate.getTime()));
-        log.info("Save latest pull at {}", latestPullDate);
-        keyValues.save(keyValue);
+        
+        composePuller.persistLatestPullAt(latestPullDate);
     }
 
     protected AbstractHxHisPatientPuller.PullRange latestPullAt() {

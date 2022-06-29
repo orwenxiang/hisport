@@ -1,5 +1,9 @@
 package com.orwen.hisport.hxhis.puller;
 
+import com.orwen.hisport.common.dbaccess.KeyValuePO;
+import com.orwen.hisport.common.dbaccess.QKeyValuePO;
+import com.orwen.hisport.common.dbaccess.repository.KeyValueRepository;
+import com.orwen.hisport.common.enums.HisPortKey;
 import com.orwen.hisport.hxhis.dbaccess.HxHisLeavePO;
 import com.orwen.hisport.hxhis.dbaccess.HxHisOccurredTimeCare;
 import com.orwen.hisport.hxhis.dbaccess.HxHisPatientPO;
@@ -18,6 +22,8 @@ import java.util.List;
 @Slf4j
 @Component
 public class HxHisComposePuller extends AbstractHxHisPatientPuller {
+    private static final QKeyValuePO qKeyValue = QKeyValuePO.keyValuePO;
+
     @Autowired
     private HxHisLeavePuller leavePuller;
 
@@ -29,6 +35,9 @@ public class HxHisComposePuller extends AbstractHxHisPatientPuller {
 
     @Autowired
     private TransactionRequiresNew transactionRequiresNew;
+
+    @Autowired
+    private KeyValueRepository keyValues;
 
     @Override
     protected void doPull(PullRange pullRange) {
@@ -58,6 +67,20 @@ public class HxHisComposePuller extends AbstractHxHisPatientPuller {
                         log.error("Not support process type {}", occurredTimeCare);
                     }
                 })));
+        
+        persistLatestPullAt(latestPullAt);
+    }
+
+    public void persistLatestPullAt(Date latestPullAt) {
+        KeyValuePO keyValue = keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT))
+                .orElseGet(() -> {
+                    KeyValuePO keyValuePO = new KeyValuePO();
+                    keyValuePO.setKey(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT);
+                    return keyValuePO;
+                });
+        keyValue.setValue(String.valueOf(latestPullAt.getTime()));
+        log.info("Save latest pull at {}", latestPullAt);
+        keyValues.save(keyValue);
     }
 
     private void ignoreException(Runnable runnable) {

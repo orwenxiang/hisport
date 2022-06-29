@@ -29,10 +29,6 @@ import org.springframework.web.client.RestTemplate;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 @EnableAsync
 @Configuration
@@ -51,13 +47,6 @@ public class HisPortAutoConfiguration {
     @Bean
     public TransactionRequiresNew transactionRequiresNew(PlatformTransactionManager transactionManager) {
         return new TransactionRequiresNew(transactionManager);
-    }
-
-    @Bean(destroyMethod = "shutdown", name = "patientPullExecutor")
-    public ExecutorService patientPullExecutor() {
-        return new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(),
-                Runtime.getRuntime().availableProcessors() * 4, 60,
-                TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     }
 
     @Bean(name = "patientPullRate")

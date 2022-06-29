@@ -7,10 +7,9 @@ import com.orwen.hisport.common.dbaccess.repository.KeyValueRepository;
 import com.orwen.hisport.common.enums.HisPortKey;
 import com.orwen.hisport.hxhis.puller.AbstractHxHisPatientPuller;
 import com.orwen.hisport.hxhis.puller.HxHisCarePuller;
+import com.orwen.hisport.hxhis.puller.HxHisComposePuller;
 import com.orwen.hisport.utils.DateUtils;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,8 +21,6 @@ import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -36,13 +33,10 @@ public class HxHisPatientRetriever {
     private HisPortProperties properties;
 
     @Autowired
-    private ExecutorService patientPullExecutor;
-
-    @Autowired
     private KeyValueRepository keyValues;
 
     @Autowired
-    private ObjectProvider<AbstractHxHisPatientPuller> hxHisPatientPullers;
+    private HxHisComposePuller composePuller;
 
     @Autowired
     private HxHisCarePuller carePuller;
@@ -70,8 +64,8 @@ public class HxHisPatientRetriever {
         } else {
             log.debug("Do patient pull with ranges {}", pullRanges);
         }
-        hxHisPatientPullers.orderedStream().filter(item -> !(item instanceof HxHisCarePuller))
-                .forEach(patientPuller -> doPullerWithRanges(patientPuller, pullRanges));
+
+        pullRanges.forEach(composePuller::pull);
 
         carePuller.pull(HxHisCarePuller.currentPullRange());
 
@@ -85,21 +79,6 @@ public class HxHisPatientRetriever {
         keyValue.setValue(String.valueOf(latestPullDate.getTime()));
         log.info("Save latest pull at {}", latestPullDate);
         keyValues.save(keyValue);
-    }
-
-    @SneakyThrows
-    protected void doPullerWithRanges(
-            AbstractHxHisPatientPuller patientPuller, List<AbstractHxHisPatientPuller.PullRange> pullRanges) {
-        if (pullRanges.size() < 2) {
-            patientPuller.pull(pullRanges.get(0));
-            return;
-        }
-        CountDownLatch pullCount = new CountDownLatch(pullRanges.size());
-        pullRanges.forEach(pullRange -> patientPullExecutor.submit(() -> {
-            patientPuller.pull(pullRange.extendIn(patientPullExtendIn));
-            pullCount.countDown();
-        }));
-        pullCount.await();
     }
 
     protected AbstractHxHisPatientPuller.PullRange latestPullAt() {
@@ -117,6 +96,7 @@ public class HxHisPatientRetriever {
                 DateUtils.parseEndAt(properties.getPull().getMaxPullAt()) : new Date();
 
         return Stream.iterate(startAt, current -> !current.isBiggerThan(maxPullAt),
-                current -> current.nextDuration(duration)).toList();
+                        current -> current.nextDuration(duration)).
+                map(pullRange -> pullRange.extendIn(patientPullExtendIn)).toList();
     }
 }

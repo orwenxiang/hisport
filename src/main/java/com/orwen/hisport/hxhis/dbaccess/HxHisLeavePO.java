@@ -16,7 +16,7 @@ import java.util.Date;
 @Entity
 @ToString
 @Table(name = "hx_his_leaves", indexes = {@Index(columnList = "person_id,leave_at", unique = true)})
-public class HxHisLeavePO extends AbstractPersistable {
+public class HxHisLeavePO extends AbstractPersistable implements HxHisOccurredTimeCare {
 
     @JsonProperty("personId")
     @Column(name = "person_id", length = 48)
@@ -32,4 +32,11 @@ public class HxHisLeavePO extends AbstractPersistable {
     @Column(name = "latest_pull_at")
     @Temporal(TemporalType.TIMESTAMP)
     private Date latestPullAt;
+
+    @Override
+    @Transient
+    @org.springframework.data.annotation.Transient
+    public Date getOccurredAt() {
+        return leaveAt == null ? latestPullAt : leaveAt;
+    }
 }

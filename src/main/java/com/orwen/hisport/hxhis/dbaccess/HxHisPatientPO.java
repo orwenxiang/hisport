@@ -23,7 +23,7 @@ import java.util.Date;
 @Entity
 @ToString
 @Table(name = "hx_his_patients", indexes = {@Index(columnList = "person_id,in_hospital", unique = true)})
-public class HxHisPatientPO extends AbstractPersistable {
+public class HxHisPatientPO extends AbstractPersistable implements HxHisOccurredTimeCare {
     @JsonProperty("personId")
     @Column(name = "person_id", length = 48)
     private String personId;
@@ -98,4 +98,11 @@ public class HxHisPatientPO extends AbstractPersistable {
     @Column(name = "latest_pull_at")
     @Temporal(TemporalType.TIMESTAMP)
     private Date latestPullAt;
+
+    @Override
+    @Transient
+    @org.springframework.data.annotation.Transient
+    public Date getOccurredAt() {
+        return inHospital == null ? latestPullAt : inHospital;
+    }
 }

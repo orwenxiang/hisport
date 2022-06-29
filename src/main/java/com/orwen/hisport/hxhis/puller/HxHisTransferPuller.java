@@ -26,15 +26,19 @@ public class HxHisTransferPuller extends AbstractHxHisPatientPuller {
 
     @Override
     protected void doPull(PullRange pullRange) {
-        List<HxHisTransferPO> hisTransfers = retrievePatientContent(false, "ZJ-GETPATTRANSFERINFO",
-                pullRange, new TypeReference<>() {
-                });
+        List<HxHisTransferPO> hisTransfers = transferPull(pullRange);
         if (CollectionUtils.isEmpty(hisTransfers)) {
             return;
         }
         Date latestPullAt = pullRange.getEndDate();
         hisTransfers.forEach(hisTransfer -> transactionRequiresNew.executeWithoutResult(status ->
                 processTransfer(hisTransfer, latestPullAt)));
+    }
+
+    List<HxHisTransferPO> transferPull(PullRange pullRange) {
+        return retrievePatientContent(false, "ZJ-GETPATTRANSFERINFO",
+                pullRange, new TypeReference<>() {
+                });
     }
 
     protected void processTransfer(HxHisTransferPO hisTransfer, Date latestPullAt) {

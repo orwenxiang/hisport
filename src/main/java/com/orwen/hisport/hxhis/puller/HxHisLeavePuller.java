@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.List;
 
 @Slf4j
-@Order(2)
+@Order(1)
 @Component
 public class HxHisLeavePuller extends AbstractHxHisPatientPuller {
     private static final QHxHisLeavePO qLeave = QHxHisLeavePO.hxHisLeavePO;
@@ -26,8 +26,7 @@ public class HxHisLeavePuller extends AbstractHxHisPatientPuller {
 
     @Override
     protected void doPull(PullRange pullRange) {
-        List<HxHisLeavePO> hisLeaves = retrievePatientContent(true, "ZJ-GETINCHARGEINFO", pullRange, new TypeReference<>() {
-        });
+        List<HxHisLeavePO> hisLeaves = leavePull(pullRange);
         if (CollectionUtils.isEmpty(hisLeaves)) {
             return;
         }
@@ -36,7 +35,12 @@ public class HxHisLeavePuller extends AbstractHxHisPatientPuller {
                 executeWithoutResult(status -> processHisLeave(hisLeave, latestPullAt)));
     }
 
-    public void processHisLeave(HxHisLeavePO hisLeave, Date latestPullAt) {
+    List<HxHisLeavePO> leavePull(PullRange pullRange) {
+        return retrievePatientContent(true, "ZJ-GETINCHARGEINFO", pullRange, new TypeReference<>() {
+        });
+    }
+
+    protected void processHisLeave(HxHisLeavePO hisLeave, Date latestPullAt) {
         leaves.findOne(qLeave.personId.eq(hisLeave.getPersonId())
                 .and(qLeave.leaveAt.eq(hisLeave.getLeaveAt()))).ifPresentOrElse(leavePO -> {
                     log.debug("The patient leave with id {} and at {} is existed that pulled at {}",

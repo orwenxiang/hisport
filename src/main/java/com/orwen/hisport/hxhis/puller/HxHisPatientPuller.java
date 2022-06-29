@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.List;
 
 @Slf4j
-@Order(1)
+@Order(2)
 @Component
 public class HxHisPatientPuller extends AbstractHxHisPatientPuller {
     private static final QHxHisPatientPO qPatient = QHxHisPatientPO.hxHisPatientPO;
@@ -26,14 +26,19 @@ public class HxHisPatientPuller extends AbstractHxHisPatientPuller {
 
     @Override
     protected void doPull(PullRange pullRange) {
-        List<HxHisPatientPO> hisPatients = retrievePatientContent(false, "ZJ-GETINPATINFO", pullRange, new TypeReference<>() {
-        });
+        List<HxHisPatientPO> hisPatients = patientPull(pullRange);
+
         if (CollectionUtils.isEmpty(hisPatients)) {
             return;
         }
         Date latestPullAt = pullRange.getEndDate();
         hisPatients.forEach(hisPatient -> transactionRequiresNew.
                 executeWithoutResult(status -> processPatientEntry(hisPatient, latestPullAt)));
+    }
+
+    List<HxHisPatientPO> patientPull(PullRange pullRange) {
+        return retrievePatientContent(false, "ZJ-GETINPATINFO", pullRange, new TypeReference<>() {
+        });
     }
 
     protected void processPatientEntry(HxHisPatientPO hisPatient, Date latestPullAt) {

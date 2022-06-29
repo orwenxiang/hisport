@@ -2,10 +2,6 @@ package com.orwen.hisport.autoconfigure;
 
 import com.orwen.hisport.common.dbaccess.repository.DBAccessRepositoryImpl;
 import com.orwen.hisport.utils.TransactionRequiresNew;
-import org.redisson.api.RRateLimiter;
-import org.redisson.api.RateIntervalUnit;
-import org.redisson.api.RateType;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -40,21 +36,9 @@ public class HisPortAutoConfiguration {
     @Autowired
     private HisPortProperties properties;
 
-    @Autowired
-    private RedissonClient redissonClient;
-
-
     @Bean
     public TransactionRequiresNew transactionRequiresNew(PlatformTransactionManager transactionManager) {
         return new TransactionRequiresNew(transactionManager);
-    }
-
-    @Bean(name = "patientPullRate")
-    public RRateLimiter patientPullRate() {
-        RRateLimiter rateLimiter = redissonClient.getRateLimiter("patient_pull_rates");
-        rateLimiter.setRate(RateType.OVERALL, properties.getPull().getRateInSecond(),
-                1, RateIntervalUnit.SECONDS);
-        return rateLimiter;
     }
 
     @Bean("patientPullerRestTemplate")

@@ -13,7 +13,6 @@ import com.orwen.hisport.hxhis.dbaccess.HxHisTransferPO;
 import com.orwen.hisport.hxhis.model.HxHisStaffDTO;
 import com.orwen.hisport.hxhis.model.common.HxHisCommonDepartDTO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitOperations;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -28,8 +27,6 @@ import java.util.Map;
 @Slf4j
 @Component
 public class HisPortDispatcher {
-    @Autowired
-    private RabbitOperations rabbitOperation;
     @Autowired(required = false)
     private ArtemisClient artemisClient;
 
@@ -49,11 +46,8 @@ public class HisPortDispatcher {
         artemisDepart.setParentId(StringUtils.hasText(departDTO.getParent()) ? departDTO.getParent() : "-1");
         artemisDepart.setName(departDTO.getName());
         artemisDepart.setEnabled(departDTO.isEnable());
-        if (properties.getArtemis().isAsyncNotify()) {
-            rabbitOperation.convertAndSend(HxPortDefs.DEPART_CHANGED_QUEUE, artemisDepart);
-        } else if (artemisClient != null) {
-            artemisClient.departChanged(artemisDepart);
-        }
+
+        artemisClient.departChanged(artemisDepart);
     }
 
     public void staffChanged(HxHisStaffDTO staffDTO) {
@@ -66,22 +60,16 @@ public class HisPortDispatcher {
             artemisStaffDTO.setGender(HisPortGender.ofHxHisCode(staffDTO.getSexCode()));
             artemisStaffDTO.setPhone(staffDTO.getPhone());
             artemisStaffDTO.setRole(guessStaffRole(staffDTO.getPositionCode()));
-            if (properties.getArtemis().isAsyncNotify()) {
-                rabbitOperation.convertAndSend(HxPortDefs.STAFF_JOINED_QUEUE, artemisStaffDTO);
-            } else if (artemisClient != null) {
-                artemisClient.staffJoin(artemisStaffDTO);
-            }
+
+            artemisClient.staffJoin(artemisStaffDTO);
         } else {
             ArtemisLeaveDTO leaveDTO = new ArtemisLeaveDTO();
             leaveDTO.setPersonId(staffDTO.getId());
             leaveDTO.setLeaveAt(staffDTO.getRetireDate() == null ? new Date()
                     : Date.from(staffDTO.getRetireDate().atStartOfDay()
                     .toInstant(HxPortDefs.DEFAULT_ZONE_OFFSET)));
-            if (properties.getArtemis().isAsyncNotify()) {
-                rabbitOperation.convertAndSend(HxPortDefs.STAFF_LEAVED_QUEUE, leaveDTO);
-            } else if (artemisClient != null) {
-                artemisClient.staffLeave(leaveDTO);
-            }
+
+            artemisClient.staffLeave(leaveDTO);
         }
     }
 
@@ -98,41 +86,29 @@ public class HisPortDispatcher {
         ArtemisPatientDTO artemisPatientDTO = new ArtemisPatientDTO();
         BeanUtils.copyProperties(patientPO, artemisPatientDTO, "id");
         artemisPatientDTO.setId(patientPO.getPersonId());
-        if (properties.getArtemis().isAsyncNotify()) {
-            rabbitOperation.convertAndSend(HxPortDefs.PATIENT_JOINED_QUEUE, artemisPatientDTO);
-        } else if (artemisClient != null) {
-            artemisClient.patientJoin(artemisPatientDTO);
-        }
+
+        artemisClient.patientJoin(artemisPatientDTO);
     }
 
     public void patientLeave(HxHisLeavePO leavePO) {
         ArtemisLeaveDTO artemisLeaveDTO = new ArtemisLeaveDTO();
         BeanUtils.copyProperties(leavePO, artemisLeaveDTO);
-        if (properties.getArtemis().isAsyncNotify()) {
-            rabbitOperation.convertAndSend(HxPortDefs.PATIENT_LEAVED_QUEUE, artemisLeaveDTO);
-        } else if (artemisClient != null) {
-            artemisClient.patientLeave(artemisLeaveDTO);
-        }
+
+        artemisClient.patientLeave(artemisLeaveDTO);
     }
 
     public void patientTransfer(HxHisTransferPO transferPO) {
         ArtemisTransferDTO transferDTO = new ArtemisTransferDTO();
         BeanUtils.copyProperties(transferPO, transferDTO, "latestPullAt");
-        if (properties.getArtemis().isAsyncNotify()) {
-            rabbitOperation.convertAndSend(HxPortDefs.PATIENT_TRANSFER_QUEUE, transferDTO);
-        } else if (artemisClient != null) {
-            artemisClient.patientTransfer(transferDTO);
-        }
+
+        artemisClient.patientTransfer(transferDTO);
     }
 
     public void patientCare(HxHisCarePO carePO) {
         ArtemisCareDTO artemisCareDTO = new ArtemisCareDTO();
         BeanUtils.copyProperties(carePO, artemisCareDTO, "id", "latestPullAt", "mpNat");
         artemisCareDTO.setMpNat(Boolean.parseBoolean(carePO.getMpNat()));
-        if (properties.getArtemis().isAsyncNotify()) {
-            rabbitOperation.convertAndSend(HxPortDefs.CARE_JOINED_QUEUE, artemisCareDTO);
-        } else if (artemisClient != null) {
-            artemisClient.careJoin(artemisCareDTO);
-        }
+
+        artemisClient.careJoin(artemisCareDTO);
     }
 }

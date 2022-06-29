@@ -5,19 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hikvision.artemis.sdk.ArtemisHttpUtil;
 import com.orwen.hisport.artemis.model.*;
 import com.orwen.hisport.autoconfigure.HisPortProperties;
-import com.orwen.hisport.defs.HxPortDefs;
-import com.rabbitmq.client.Channel;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.Queue;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jackson.JacksonProperties;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.lang.Nullable;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,13 +57,6 @@ public class ArtemisClient {
         objectMapper = jackson2ObjectMapperBuilder.build();
     }
 
-    @SneakyThrows
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.DEPART_CHANGED_QUEUE), concurrency = "1", ackMode = "MANUAL")
-    public void departChanged(ArtemisDepartDTO artemisDepart, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
-        syncDepart(List.of(artemisDepart));
-        channel.basicAck(tag, false);
-    }
-
     public void departChanged(ArtemisDepartDTO artemisDepart) {
         syncDepart(List.of(artemisDepart));
     }
@@ -84,12 +71,6 @@ public class ArtemisClient {
         });
     }
 
-    @SneakyThrows
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.STAFF_JOINED_QUEUE), concurrency = "1", ackMode = "MANUAL")
-    public void staffJoin(ArtemisStaffDTO staffDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
-        staffJoin(staffDTO);
-        channel.basicAck(tag, false);
-    }
 
     public void staffJoin(ArtemisStaffDTO staffDTO) {
         doWithRetry(() -> {
@@ -100,12 +81,6 @@ public class ArtemisClient {
         });
     }
 
-    @SneakyThrows
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.STAFF_LEAVED_QUEUE), concurrency = "1", ackMode = "MANUAL")
-    public void staffLeave(ArtemisLeaveDTO leaveHospitalDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
-        staffLeave(leaveHospitalDTO);
-        channel.basicAck(tag, false);
-    }
 
     public void staffLeave(ArtemisLeaveDTO leaveHospitalDTO) {
         doWithRetry(() -> {
@@ -116,12 +91,6 @@ public class ArtemisClient {
         });
     }
 
-    @SneakyThrows
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_JOINED_QUEUE), concurrency = "1", ackMode = "MANUAL")
-    public void patientJoin(ArtemisPatientDTO patientDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
-        patientJoin(patientDTO);
-        channel.basicAck(tag, false);
-    }
 
     public void patientJoin(ArtemisPatientDTO patientDTO) {
         doWithRetry(() -> {
@@ -132,12 +101,6 @@ public class ArtemisClient {
         });
     }
 
-    @SneakyThrows
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_LEAVED_QUEUE), concurrency = "1", ackMode = "MANUAL")
-    public void patientLeave(ArtemisLeaveDTO leaveHospitalDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
-        patientLeave(leaveHospitalDTO);
-        channel.basicAck(tag, false);
-    }
 
     public void patientLeave(ArtemisLeaveDTO leaveHospitalDTO) {
         doWithRetry(() -> {
@@ -148,12 +111,6 @@ public class ArtemisClient {
         });
     }
 
-    @SneakyThrows
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.PATIENT_TRANSFER_QUEUE), concurrency = "1", ackMode = "MANUAL")
-    public void patientTransfer(ArtemisTransferDTO transferDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
-        patientTransfer(transferDTO);
-        channel.basicAck(tag, false);
-    }
 
     public void patientTransfer(ArtemisTransferDTO transferDTO) {
         doWithRetry(() -> {
@@ -164,12 +121,6 @@ public class ArtemisClient {
         });
     }
 
-    @SneakyThrows
-    @RabbitListener(queuesToDeclare = @Queue(HxPortDefs.CARE_JOINED_QUEUE), concurrency = "1", ackMode = "MANUAL")
-    public void careJoin(ArtemisCareDTO careDTO, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
-        careJoin(careDTO);
-        channel.basicAck(tag, false);
-    }
 
     public void careJoin(ArtemisCareDTO careDTO) {
         doWithRetry(() -> {

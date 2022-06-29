@@ -13,7 +13,6 @@ import com.orwen.hisport.hxhis.HxHisRecordService;
 import com.orwen.hisport.hxhis.dbaccess.HxHisRecordPO;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RRateLimiter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
@@ -85,10 +84,6 @@ public abstract class AbstractHxHisPatientPuller {
     private RestTemplate patientPullerRestTemplate;
 
     @Autowired
-    @Qualifier("patientPullRate")
-    private RRateLimiter patientPullRate;
-
-    @Autowired
     private ObjectMapper objectMapper;
 
     @Transactional
@@ -137,8 +132,6 @@ public abstract class AbstractHxHisPatientPuller {
     private String retrievePatientContent(boolean toString, String methodCode, String requestStr) {
         String requestBody = WS_SOAP_MESSAGE_TEMPLATE.replace(TO_METHOD, toString ? TO_STRING_METHOD : TO_STREAM_METHOD)
                 .replace(REQUEST_METHOD, methodCode).replace(REQUEST_BODY, requestStr);
-
-        patientPullRate.acquire();
 
         ResponseEntity<String> responseEntity = patientPullerRestTemplate.exchange(properties.getPull().getEndpoint(), HttpMethod.POST,
                 new HttpEntity<>(requestBody, toString ? TO_STRING_HEADERS : TO_STREAM_HEADERS), new ParameterizedTypeReference<>() {

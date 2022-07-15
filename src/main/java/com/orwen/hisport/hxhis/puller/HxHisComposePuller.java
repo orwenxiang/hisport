@@ -72,15 +72,19 @@ public class HxHisComposePuller extends AbstractHxHisPatientPuller {
     }
 
     public void persistLatestPullAt(Date latestPullAt) {
-        KeyValuePO keyValue = keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT))
-                .orElseGet(() -> {
-                    KeyValuePO keyValuePO = new KeyValuePO();
-                    keyValuePO.setKey(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT);
-                    return keyValuePO;
-                });
-        keyValue.setValue(String.valueOf(latestPullAt.getTime()));
-        log.info("Save latest pull at {}", latestPullAt);
-        keyValues.save(keyValue);
+        try {
+            KeyValuePO keyValue = keyValues.findOne(qKeyValue.key.eq(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT))
+                    .orElseGet(() -> {
+                        KeyValuePO keyValuePO = new KeyValuePO();
+                        keyValuePO.setKey(HisPortKey.HX_HIS_LATEST_PULL_PATIENT_AT);
+                        return keyValuePO;
+                    });
+            keyValue.setValue(String.valueOf(latestPullAt.getTime()));
+            log.info("Save latest pull at {}", latestPullAt);
+            keyValues.save(keyValue);
+        } catch (Throwable e) {
+            log.warn("Ignore persist latest pull at wrong", e);
+        }
     }
 
     private void ignoreException(Runnable runnable) {

@@ -6,7 +6,6 @@ import com.orwen.hisport.common.dbaccess.QKeyValuePO;
 import com.orwen.hisport.common.dbaccess.repository.KeyValueRepository;
 import com.orwen.hisport.common.enums.HisPortKey;
 import com.orwen.hisport.hxhis.puller.AbstractHxHisPatientPuller;
-import com.orwen.hisport.hxhis.puller.HxHisCarePuller;
 import com.orwen.hisport.hxhis.puller.HxHisComposePuller;
 import com.orwen.hisport.utils.DateUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -38,9 +37,6 @@ public class HxHisPatientRetriever {
     @Autowired
     private HxHisComposePuller composePuller;
 
-    @Autowired
-    private HxHisCarePuller carePuller;
-
     private Duration patientPullRange;
 
     private Duration patientPullExtendIn;
@@ -67,10 +63,8 @@ public class HxHisPatientRetriever {
 
         pullRanges.forEach(composePuller::pull);
 
-        carePuller.pull(HxHisCarePuller.currentPullRange());
-
         Date latestPullDate = pullRanges.get(pullRanges.size() - 1).getEndDate();
-        
+
         composePuller.persistLatestPullAt(latestPullDate);
     }
 

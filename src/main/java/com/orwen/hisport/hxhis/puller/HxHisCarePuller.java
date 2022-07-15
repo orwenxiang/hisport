@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 @Slf4j
 @Order(4)
 @Component
+@Deprecated
 public class HxHisCarePuller extends AbstractHxHisPatientPuller {
     private static final QHxHisCarePO qCare = QHxHisCarePO.hxHisCarePO;
     @Autowired

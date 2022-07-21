@@ -45,6 +45,7 @@ public class HisPortDispatcher {
         artemisDepart.setDepartId(departDTO.getId());
         artemisDepart.setParentId(StringUtils.hasText(departDTO.getParent()) ? departDTO.getParent() : "-1");
         artemisDepart.setName(departDTO.getName());
+        artemisDepart.setStatus(departDTO.getStatus());
         artemisDepart.setEnabled(departDTO.isEnable());
 
         artemisClient.departChanged(artemisDepart);

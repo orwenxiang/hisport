@@ -59,6 +59,7 @@ public class HxHisTransferPuller extends AbstractHxHisPatientPuller {
                 },
                 () -> {
                     dispatcher.patientTransfer(hisTransfer);
+                    reportDispatched(hisTransfer, latestPullAt);
                     hisTransfer.setLatestPullAt(latestPullAt);
                     transfers.save(hisTransfer);
                     storeRecord(hisTransfer, true, latestPullAt);
@@ -72,7 +73,12 @@ public class HxHisTransferPuller extends AbstractHxHisPatientPuller {
     }
 
     private void reportExisted(HxHisTransferPO transferPO, Date latestPullAt) {
-        log.debug("The patient transfer with id {} and at {} is existed that pulled at {}",
+        log.debug("The patient transfer with person id {} and at {} is existed that pulled at {}",
+                transferPO.getPersonId(), transferPO.getTransferAt(), latestPullAt);
+    }
+
+    private void reportDispatched(HxHisTransferPO transferPO, Date latestPullAt) {
+        log.debug("The patient transfer with person id {} and at {} is dispatched that pulled at {}",
                 transferPO.getPersonId(), transferPO.getTransferAt(), latestPullAt);
     }
 }

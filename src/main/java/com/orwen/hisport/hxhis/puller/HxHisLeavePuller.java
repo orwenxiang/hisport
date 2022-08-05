@@ -57,6 +57,7 @@ public class HxHisLeavePuller extends AbstractHxHisPatientPuller {
                 },
                 () -> {
                     dispatcher.patientLeave(hisLeave);
+                    reportDispatched(hisLeave, latestPullAt);
                     hisLeave.setLatestPullAt(latestPullAt);
                     leaves.save(hisLeave);
                     storeRecord(hisLeave, true, latestPullAt);
@@ -70,7 +71,12 @@ public class HxHisLeavePuller extends AbstractHxHisPatientPuller {
     }
 
     private void reportExisted(HxHisLeavePO hisLeave, Date latestPullAt) {
-        log.debug("The patient leave with id {} and at {} is existed that pulled at {}",
+        log.debug("The patient leave with person id {} and at {} is existed that pulled at {}",
+                hisLeave.getPersonId(), hisLeave.getLeaveAt(), latestPullAt);
+    }
+
+    private void reportDispatched(HxHisLeavePO hisLeave, Date latestPullAt) {
+        log.debug("The patient leave with person id {} and at {} is dispatched that pulled at {}",
                 hisLeave.getPersonId(), hisLeave.getLeaveAt(), latestPullAt);
     }
 }

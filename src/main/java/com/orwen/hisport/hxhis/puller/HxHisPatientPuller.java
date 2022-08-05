@@ -59,6 +59,7 @@ public class HxHisPatientPuller extends AbstractHxHisPatientPuller {
                 },
                 () -> {
                     dispatcher.patientEntry(hisPatient);
+                    reportDispatched(hisPatient, latestPullAt);
                     hisPatient.setLatestPullAt(latestPullAt);
                     patients.save(hisPatient);
                     storeRecord(hisPatient, true, latestPullAt);
@@ -73,7 +74,12 @@ public class HxHisPatientPuller extends AbstractHxHisPatientPuller {
     }
 
     private void reportExisted(HxHisPatientPO hisPatient, Date latestPullAt) {
-        log.debug("The patient entry with id {} and at {} is existed that pulled at {}",
-                hisPatient.getPersonId(), hisPatient.getInHospital(), latestPullAt);
+        log.debug("The patient entry with person id {},name {} and at {} is existed that pulled at {}",
+                hisPatient.getPersonId(), hisPatient.getName(), hisPatient.getInHospital(), latestPullAt);
+    }
+
+    private void reportDispatched(HxHisPatientPO hisPatient, Date latestPullAt) {
+        log.debug("The patient entry with person id {},name {} and at {} is dispatched that pulled at {}",
+                hisPatient.getPersonId(), hisPatient.getName(), hisPatient.getInHospital(), latestPullAt);
     }
 }

@@ -24,7 +24,7 @@ public class ArtemisDepartDTO implements Serializable {
     @JsonProperty("parentIndexCode")
     private String parentId;
     
-    @JsonProperty("statue")
+    @JsonProperty("status")
     private String status;
 
     @JsonIgnore

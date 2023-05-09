@@ -6,7 +6,11 @@ import com.orwen.hisport.hxhis.dbaccess.QHxHisRecordPO;
 import com.orwen.hisport.hxhis.dbaccess.repository.HxHisRecordRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -30,5 +34,15 @@ public class HxHisRecordService {
         } catch (Throwable e) {
             log.warn("Ignore exception", e);
         }
+    }
+
+    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.DAYS)
+    void cleanRecord() {
+        if (!properties.isCleanRecords()) {
+            return;
+        }
+        Date deleteAt = new Date(System.currentTimeMillis() - properties.getCleanRecordIn().toMillis());
+        long deleteRecords = records.delete(qRecord).where(qRecord.pullAt.before(deleteAt)).execute();
+        log.warn("Clean the records {} before {}", deleteRecords, deleteAt);
     }
 }
